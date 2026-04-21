@@ -5,6 +5,8 @@ from models.measurement import Measurement
 from models.setting import Setting
 from core.db_config import db
 
+# первый коммит
+
 # Создаем Blueprint для группировки путей (роутов) нашего API
 api_bp = Blueprint('api', __name__)
 

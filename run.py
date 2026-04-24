@@ -16,7 +16,7 @@ def create_app():
     # Переносим все настройки из класса Config в системный словарь app.config
     app.config.from_object(Config)
 
-    # 2. Инициализируем SQLAlchemy и Flask-Migrate
+    # 2. Инициализируем SQLAlchemy и Flask-Migrate.
     # Связываем объекты БД с конкретным созданным приложением app
     db.init_app(app)
     migrate.init_app(app, db)

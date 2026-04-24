@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify, request, redirect
-from models.device import Device
+# from models.device import Device
 from models.setting import Setting
 from core.db_config import db
 
-# СоздаемBlueprint для настроек
+# Создаем Blueprint для настроек
 settings_bp = Blueprint('settings', __name__)
 
 @settings_bp.route('/rename', methods=['POST'])
@@ -30,42 +30,6 @@ def rename_device():
         print("Ошибка: Не все данные получены из формы (проверь disabled/readOnly)")
             
     return redirect('/')
-
-@settings_bp.route('/api/settings/<int:sensor_id>', methods=['GET', 'POST'])
-# def handle_settings(sensor_id):
-#     """Универсальное API: работает и с температурой, и с влажностью, и с чем угодно"""
-#     from flask import request
-    
-#     # 1. Берем тип из URL (например: ?type=hum). Если нет — по умолчанию temp
-#     d_type = request.args.get('type', default='temp')
-    
-#     # 2. Ищем настройки именно через filter_by (это обходит ошибку первичного ключа)
-#     setting = Setting.query.filter_by(sensor_id=sensor_id, data_type=d_type).first()
-    
-#     if request.method == 'POST':
-#         # Получаем JSON от твоего нового settings.js
-#         data = request.get_json()
-        
-#         if not setting:
-#             # Если настроек для этой пары еще нет — создаем новую запись
-#             setting = Setting(sensor_id=sensor_id, data_type=d_type)
-#             db.session.add(setting)
-        
-#         # Читаем новые данные из JSON
-#         setting.ui_type = data.get('ui_type', 'numeric')
-#         new_min = float(data.get('min', 18.0))
-#         new_max = float(data.get('max', 28.0))
-        
-#         # Сохраняем через метод модели
-#         success, message = setting.set_bounds(new_min, new_max)
-#         # return jsonify({'success': success, 'message': message})
-    
-#     # 4. Ответ для GET: отдаем чистые 'min' и 'max'
-#     return jsonify({
-#         'min': setting.min if setting else 18.0,
-#         'max': setting.max if setting else 28.0,
-#         'type': d_type
-#     })
 
 @settings_bp.route('/api/settings/<int:sensor_id>', methods=['GET', 'POST'])
 def handle_settings(sensor_id):
@@ -109,14 +73,6 @@ def handle_settings(sensor_id):
     return jsonify({
         'min': setting.min if setting else 18.0,
         'max': setting.max if setting else 28.0,
-        'ui_type': setting.ui_type if setting else 'numeric',
-        'type': d_type
-    })
-    
-    # Для GET запроса: возвращаем текущие пороги для фронтенда
-    return jsonify({
-        'min': setting.min if setting else 18,
-        'max': setting.max if setting else 28,
         'ui_type': setting.ui_type if setting else 'numeric',
         'type': d_type
     })

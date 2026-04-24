@@ -7,7 +7,7 @@ from core.db_config import db
 
 # первый коммит
 
-# Создаем Blueprint для группировки путей (роутов) нашего API
+# Создаем Blueprint для группировки путей (rout) нашего API
 api_bp = Blueprint('api', __name__)
 
 @api_bp.route('/api/latest')
@@ -31,7 +31,7 @@ def get_latest_data():
         # Ожидается, что каждый элемент в distinct_types является кортежем из одного элемента, 
         # запятая (sensor_type,) позволяет вытащить этот элемент и присвоить его переменной sensor_type
         for (sensor_type,) in distinct_types:
-            # 5. Находим САМУЮ ПОСЛЕДНЮЮ запись для этого датчика и этого типа данных
+            # 5. Находим САМУЮ ПОСЛЕДНЮЮ запись для этого датчика и этого типа данных.
             # Сортируем по ID в обратном порядке (desc) и берем первую запись
             last_entry = Measurement.query.filter_by(sensor_id = modul.id, data_type = sensor_type).order_by(Measurement.id.desc()).first()
             

@@ -13,6 +13,11 @@ class Setting(db.Model):
     # Категория отображения (numeric, leak, door, motion)
     ui_type = db.Column(db.String(20), default='numeric')
 
+    # --- НАШИ НОВЫЕ ПОЛЯ ДЛЯ ГРУППИРОВКИ И ФИЛЬТРАЦИИ ---
+    location = db.Column(db.String(50), nullable=True, default='Улица')  # Теплица, Кухня, Улица
+    group = db.Column(db.String(50), nullable=True, default='Климат')  # Отопление, Безопасность, Климат
+    # ----------------------------------------------------
+
     # Те самые лаконичные названия для порогов
     min = db.Column(db.Float, default=18.0)
     max = db.Column(db.Float, default=28.0)

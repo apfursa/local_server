@@ -1,0 +1,648 @@
+/* ==========================================================================
+   ОБЩИЕ СТИЛИ И СТРУКТУРА ИНТЕРФЕЙСА (ПОЛНАЯ АДАПТИВНОСТЬ)
+   ========================================================================== */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
+    color: #000;
+    font-size: 13px;
+    
+    /* Убираем flex-direction, чтобы блоки на ПК не вставали в один ряд */
+    display: block; 
+    
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Обёртки контента: на мобилках во всю ширь, на ПК — как аккуратное приложение */
+.control-panel {
+    width: 100%;
+    max-width: 480px; /* Идеальная ширина для удобной работы одной рукой */
+    box-sizing: border-box;
+    
+    /* Центрируем блоки на экране через margin, убирая зависимость от капризов flexbox */
+    margin: 0 auto; 
+}
+
+.main-wrapper {
+    overflow-x: auto; 
+    /* -webkit-overflow-scrolling: touch; */
+    width: 100%;
+    max-width: 480px; /* Идеальная ширина для работы одной рукой и аккуратного вида на ПК */
+    box-sizing: border-box !important;
+    margin: 0 auto;  /* Жестко центрирует оба блока по оси экрана */
+    padding: 5px 10px;
+    overflow-x: hidden; /* Меняем auto на hidden, так как люфт мы победили */
+
+}
+
+/* ВЕРХНЯЯ ПАНЕЛЬ С КНОПКАМИ И УПРАВЛЕНИЕМ */
+.control-panel {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 1000;            
+    display: flex;
+    flex-direction: column; 
+    gap: 10px;               
+    background: #ebebeb;
+    padding: 10px;
+    border-bottom: 2px solid #bbb; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 480px; /* Идеальная ширина для работы одной рукой и аккуратного вида на ПК */
+    box-sizing: border-box !important;
+    margin: 0 auto;  /* Жестко центрирует оба блока по оси экрана */
+}
+
+.control-group { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    width: 100%; 
+    justify-content: space-between; 
+}
+
+/* Чтобы был отступ только МЕЖДУ группами кнопок, а не над первой: */
+.control-group + .control-group {
+    margin-top: 10px;
+}
+
+.control-group label {
+    font-size: 16px !important;    
+    font-weight: 800 !important;   
+    color: #000;
+}
+
+/* Резиновые кнопки управления */
+.btn-toggle, .btn-group-toggle {
+    flex: 1;
+    padding: 10px 5px;
+    border: 1px solid #999;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    text-align: center;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-decoration:none; 
+    color:inherit;
+}
+
+.btn-group-toggle {
+    padding: 8px 4px;
+    font-size: 12px;
+}
+
+/* Стили активных кнопок */
+.btn-toggle.active:not(#btn-filter-alerts),
+.btn-group-toggle.active {
+    background: #555 !important;
+    color: white !important;
+    border-color: #333 !important;
+}
+
+a.btn-toggle {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+a.btn-toggle:hover {
+    background: #f0f0f0;
+}
+
+/* Панель настройки номера телефона */
+/* Главная подложка панели сервиса (в HTML у неё inline-стиля не было, задаём базовый) */
+.service-panel {
+    width: 100%;
+    box-sizing: border-box;
+    display: none; /* Панель изначально скрыта */
+}
+
+/* Внутренний контейнер панели */
+.service-panel-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Блок ввода телефона (метка + инпут с кнопкой) */
+.phone-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Текстовая метка */
+.phone-input-label {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0;
+    color: #000;
+}
+
+/* Строка, где инпут и кнопка стоят рядом */
+.phone-input-row {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Поле ввода номера телефона */
+.phone-field {
+    margin: 0;
+    padding: 8px;
+    font-size: 20px;
+    font-weight: bold;
+    height: 38px;
+    flex-grow: 1;
+    min-width: 0; /* Важно: позволяет инпуту уменьшаться на узких экранах */
+    box-sizing: border-box;
+}
+
+/* Зелёная кнопка ОК */
+.btn-phone-save {
+    width: auto;
+    padding: 0 15px;
+    background: #27ae60;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    height: 38px;
+    box-sizing: border-box;
+}
+
+/* Блок кнопок сортировки порядка */
+.sort-actions-group {
+    width: 100%;
+}
+
+/* Кнопка "Порядок" */
+.btn-sort-start {
+    margin: 0;
+    width: 100%;
+    background: #34495e;
+    color: #fff;
+    border-color: #2c3e50;
+    padding: 12px 5px;
+}
+
+/* Кнопка "Готово" */
+.btn-sort-submit {
+    margin: 0;
+    width: 100%;
+    background: #2980b9;
+    color: #fff;
+    border-color: #2471a3;
+    padding: 12px 5px;
+    display: none; /* Изначально скрыта, как в оригинале */
+}
+
+/* ЗАГОЛОВКИ ГРУПП (ПРИ ГРУППИРОВКЕ) */
+.group-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #222;
+    margin: 15px 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px;
+    background: #e0e0e0;
+    border-radius: 5px;
+}
+.group-title:hover {
+    background: #d0d0d0;
+}
+
+/* ==========================================================================
+   ТАБЛИЧНЫЙ ИНТЕРФЕЙС (COMPACT TABLE)
+   ========================================================================== */
+.dashboard-table { 
+    width: 100%;
+    margin: 5px 0 15px 0;
+    border-collapse: collapse;
+    background: white;
+}
+.dashboard-table th, .dashboard-table td { 
+    padding: 6px 3px; /* Немного уменьшаем боковые паддинги, чтобы выиграть место */
+    border: 1px solid #bbb; 
+    text-align: center; 
+    font-size: 12px;
+}
+.dashboard-table th { 
+    background: #e0e0e0; 
+    color: #000; 
+    font-weight: bold;
+}
+
+/* Распределяем фиксированную ширину для каждой колонки в режиме fixed-table */
+.dashboard-table th:nth-child(1), 
+.dashboard-table td:nth-child(1) { 
+    width: 40%; /* Название датчика (самая широкая колонка) */
+    text-align: left; 
+    font-weight: bold; 
+}
+.dashboard-table th:nth-child(2), 
+.dashboard-table td:nth-child(2) { 
+    width: 16%; /* Значение (например: 78.5) */
+}
+.dashboard-table th:nth-child(3), 
+.dashboard-table td:nth-child(3) { 
+    width: 16%; /* Пороги (50 .. 65) */
+}
+.dashboard-table th:nth-child(4), 
+.dashboard-table td:nth-child(4) { 
+    width: 14%; /* Режим (база/нет) */
+}
+.dashboard-table th:nth-child(5), 
+.dashboard-table td:nth-child(5) { 
+    width: 14%; /* Время (16:22) */
+}
+
+/* Старый класс ужимания больше не должен ломать верстку */
+.col-narrow { 
+    white-space: nowrap; 
+}  
+
+/* ФОРМЫ ПЕРЕИМЕНОВАНИЯ И ИНПУТЫ ВНУТРИ ТАБЛИЦЫ */
+form { 
+    display: flex; 
+    gap: 2px; 
+    margin: 0; 
+}
+input[type="text"] { 
+    flex-grow: 1; 
+    padding: 2px 4px; 
+    border: 1px solid #aaa; 
+    font-size: 12px; 
+    background: transparent; 
+    transition: background 0.2s;
+}
+input[type="text"]:focus {
+    background: #fff !important;
+    color: #000 !important;
+}
+
+/* ==========================================================================
+   КАРТОЧНЫЙ ИНТЕРФЕЙС (GRID CARDS)
+   ========================================================================== */
+.cards-layout {
+    display: flex;
+    flex-direction: column; 
+    gap: 10px;
+    padding: 0;
+    /* width: 100%; */
+}
+
+/* 2. Защищаем саму карточку от микро-вылетов */
+.sensor-card {
+    background: #fff;
+    border: 1px solid #ccc;
+    width: 100%; 
+    min-height: 130px; 
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    
+    /* Убеждаемся, что паддинги карточки не раздувают её наружу */
+    box-sizing: border-box !important; 
+    
+    border-radius: 6px;
+}
+.card-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    font-size: 11px; 
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 5px;
+}
+.card-time { 
+    font-size: 13px;
+    color: #000000;
+    font-weight: bold;
+}
+.card-meta { 
+    font-size: 13px;
+    color: #000;
+    font-weight: bold;
+    padding: 0 4px;
+    white-space: nowrap;   
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    max-width: 180px;      
+}
+.card-meta:empty { display: none; }
+.card-edit-btn { 
+    text-decoration: none; 
+    color: inherit; 
+    font-size: 20px !important;
+}
+
+.card-body { 
+    margin: 8px 0; 
+    text-align: center; 
+}
+.card-name { 
+    font-weight: bold; 
+    font-size: 18px; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    white-space: nowrap; 
+}
+.card-value-wrapper { 
+    display: flex;             
+    align-items: center;       
+    justify-content: center;   
+    gap: 8px;                  
+    margin-top: 4px; 
+}
+.card-value { 
+    font-size: 2.2em; 
+    font-weight: bold; 
+}
+
+/* Контейнер глушения звука в карточке */
+.mute-container {
+    display: flex;
+    flex-direction: row; 
+    align-items: center; 
+    gap: 4px;            
+}
+.mute-icon-display {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 2em !important; 
+    line-height: 1;
+    white-space: nowrap;
+}
+.mute-time-display {
+    color: #ffffff !important; 
+    font-size: 13px; 
+    font-weight: bold;
+    white-space: nowrap;
+    font-family: monospace; 
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6); 
+}
+.mute-time-display:empty { display: none; }
+
+.card-footer { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    font-size: 12px; 
+    border-top: 1px dashed #ccc; 
+    padding-top: 6px; 
+    margin-top: auto;
+}
+.card-limits { 
+    font-size: 14px !important;
+    color: #000000;
+    font-weight: bold;
+}
+.card-schedule-time {
+    font-size: 13px;
+    color: #000;
+    font-weight: bold;
+    font-family: monospace;
+}
+.card-schedule-time:empty { display: none; }
+
+.card-tag { 
+    font-size: 13px !important;
+    font-weight: bold;
+    padding: 0 3px; 
+    color: #000; 
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.card-chart-row { 
+    width: 100%; 
+    margin-top: 5px; 
+}
+
+/* ==========================================================================
+   СКВОЗНАЯ СИСТЕМА ИНДИКАЦИИ (ЦВЕТА СТРОК И КАРТОЧЕК)
+   ========================================================================== */
+
+/* 1. ЧЕРНЫЙ — Модуль не на связи (оффлайн) */
+.sensor-card.status-black, tr.status-black { 
+    background: #1a1a1a !important; 
+    color: #ffffff !important;
+    border: 1px solid #000000;
+}
+.sensor-card.status-black .card-name, 
+.sensor-card.status-black .card-value, 
+tr.status-black td, 
+tr.status-black .temp-val {
+    color: #ffffff !important;
+}
+.sensor-card.status-black .card-header, 
+.sensor-card.status-black .card-footer,
+.sensor-card.status-black .card-meta {
+    color: #aaa !important;
+}
+.sensor-card.status-black .card-edit-btn { 
+    filter: brightness(0) invert(1); 
+}
+
+/* 2. СЕРЫЙ — Нет установленных порогов контроля */
+.sensor-card.status-gray, tr.status-gray { 
+    background: #e0e0e0 !important; 
+    color: #333333 !important;
+    border: 1px solid #cccccc;
+}
+tr.status-gray td, tr.status-gray .temp-val {
+    color: #333333 !important;
+}
+
+/* 3. ЗЕЛЕНЫЙ — Всё в норме */
+.sensor-card.status-ok, tr.status-ok { 
+    background: #d4edda !important; 
+    color: #155724 !important;
+    border: 1px solid #c3e6cb;
+}
+.sensor-card.status-ok .card-value, tr.status-ok .temp-val { 
+    color: #155724 !important; 
+}
+
+/* 4. КРАСНЫЙ — Авария! Превышен максимум */
+.sensor-card.status-high, tr.status-high { 
+    background: #ff4d4d !important; 
+    color: #ffffff !important;      
+    border: 1px solid #cc0000;
+}
+.sensor-card.status-high .card-value, tr.status-high .temp-val { 
+    color: #fff !important; 
+    font-weight: bold; 
+}
+.sensor-card.status-high .card-meta,
+.sensor-card.status-high .card-time,
+.sensor-card.status-high .card-limits,
+.sensor-card.status-high .card-tag {
+    color: #fff !important;
+}
+
+/* 5. СИНИЙ — Авария! Упало ниже минимума */
+.sensor-card.status-low, tr.status-low { 
+    background: #3399ff !important; 
+    color: #ffffff !important;      
+    border: 1px solid #0066cc;
+}
+.sensor-card.status-low .card-value, tr.status-low .temp-val { 
+    color: #fff !important; 
+    font-weight: bold; 
+}
+.sensor-card.status-low .card-meta,
+.sensor-card.status-low .card-time,
+.sensor-card.status-low .card-limits,
+.sensor-card.status-low .card-tag {
+    color: #fff !important;
+}
+
+/* ==========================================================================
+   СИСТЕМНЫЕ КЛАССЫ РАБОТЫ С СЕТЬЮ И АНИМАЦИЯМИ
+   ========================================================================== */
+.offline_class { opacity: 0.6; }
+.chart-container { width: 100%; height: auto; }
+.group-content { display: none; }
+
+/* Красная мигающая кнопка аварий */
+.btn-toggle.btn-alert-active {
+    background-color: #ff4d4d !important;
+    color: white !important;
+    border-color: #990000 !important;
+    box-shadow: 0 0 10px rgba(255, 77, 77, 0.6);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+/* Стили для кнопок перемещения в режиме сортировки */
+.btn-sort-action {
+    display: block;
+    width: 100%;
+    height: 34px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.btn-sort-action:active {
+    background: #e0e0e0;
+}
+/* Класс для пустой заблокированной ячейки */
+.cell-sort-disabled {
+    background: #f4f4f4 !important;
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   ФИКС ЛЮФТА ДЛЯ МОБИЛЬНЫХ (СТРОГИЙ КОНТРОЛЬ ШИРИНЫ)
+   ========================================================================== */
+
+/* На всякий случай усмиряем таблицы, если grafik.css их ломает */
+.dashboard-table, .sort-table-mode {
+    table-layout: fixed !important; /* Не дает ячейкам расширять таблицу шире экрана */
+    width: 100% !important;
+}
+
+/* Заголовки таблицы не должны переносить и растягивать текст */
+.dashboard-table th {
+    white-space: normal !important;
+    word-break: break-word !important;
+}
+
+/* Ссылка на настройки датчика в таблице */
+.sensor-setting-link {
+    text-decoration: none;
+    color: inherit;
+    font-weight: bold;
+}
+
+/* Кликабельная ячейка со значением */
+.cell-clickable {
+    cursor: pointer;
+}
+
+/* Текст текущего значения датчика */
+.sensor-value-text {
+    font-size: 1.2em;
+}
+
+/* Ячейка порогов (мин .. макс) */
+.cell-limits {
+    font-size: 11px;
+    font-weight: bold;
+    white-space: normal; /* Безопаснее для мобильных, чем nowrap */
+    word-break: keep-all; 
+}
+
+/* Ячейка режима работы датчика */
+.cell-mode {
+    font-size: 10px;
+    font-style: italic;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+/* Ячейка времени обновления */
+.cell-time {
+    font-weight: bold;
+}
+
+/* Строка с графиком (изначально скрытая) */
+.chart-row-hidden {
+    display: none;
+}
+
+/* Кликабельная центральная область карточки */
+.card-body-clickable {
+    cursor: pointer;
+}
+
+/* Иконка шестерёнки (настройки) в углу карточки */
+.card-edit-btn {
+    font-size: 20px;
+    text-decoration: none;
+    color: inherit;
+    line-height: 1;
+}
+
+/* Скрытый по умолчанию блок под график (класс-дублёр, который мы использовали и в таблице) */
+.chart-row-hidden {
+    display: none;
+}
+
+/* Ширина колонок для кнопок перемещения в шапке таблицы */
+.col-sort-btn {
+    width: 70px;
+}
+
+/* Название датчика в режиме сортировки */
+.cell-sort-name {
+    font-size: 14px;
+    padding: 10px 5px;
+}
+
+/* Паддинги для ячеек с кнопками Вверх/Вниз */
+.cell-sort-action-pad {
+    padding: 5px;
+}

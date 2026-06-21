@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Справочники</title>
+    <link rel="stylesheet" href="/static/css/categories.css"> 
+    <script src="/static/js/jquery.min.js"></script>
+</head>
+<body>
+
+<div class="card">
+    <div class="sticky-action-bar">
+        <a href="/" class="back-btn">← Назад</a>
+        <button class="save_btn_sticky" onclick="addCategory()">Добавить</button>
+    </div>
+
+    <h2>Управление справочниками</h2>
+    
+    <div class="cat-control">
+        <label>Название:</label>
+        <input type="text" id="cat_name" placeholder="Например: Кухня">
+        
+        <label>Тип справочника:</label>
+        <select id="cat_type">
+            <option value="location">Локация</option>
+            <option value="group">Группа</option>
+        </select>
+    </div>
+
+    <div class="table-container">
+        <table class="cat-table">
+            <thead>
+                <tr>
+                    <th>Тип</th>
+                    <th>Название</th>
+                    <th style="width: 40px; text-align: center;">❌</th>
+                </tr>
+            </thead>
+            <tbody id="cat_list"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="/static/js/categories.js"></script>
+</body>
+</html>

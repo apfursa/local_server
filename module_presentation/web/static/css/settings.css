@@ -1,0 +1,228 @@
+body { 
+    font-family: Arial, sans-serif; 
+    background: #f4f4f4; 
+    display: flex; 
+    justify-content: center; 
+    padding: 10px; /* Минимальный отступ от краев экрана на мобилках */
+    font-size: 13px;
+    margin: 0;
+
+    /* Жесткая защита от горизонтального люфта на смартфонах */
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Главная карточка: теперь она резиновая */
+.card { 
+    background: white; 
+    padding: 15px; 
+    border: 1px solid #ccc;
+    width: 100%;          
+    max-width: 360px;     
+    position: relative;
+    box-sizing: border-box;
+    border-radius: 8px;
+    
+    /* Авто-маргин центрирует карточку, если экран чуть шире */
+    margin: 0 auto;
+    
+    /* Чистый контролируемый отступ сверху для контента под фиксированную плашку */
+    padding-top: 65px !important; 
+}
+
+h2 { 
+    margin-top: 0; 
+    color: #000; 
+    font-size: 15px; 
+    text-align: center; 
+    border-bottom: 1px solid #ccc; 
+    padding-bottom: 5px; 
+}
+
+label { 
+    display: block;
+    margin: 10px 0 3px 0; 
+    font-size: 14px; 
+    color: #000; 
+    font-weight: bold; 
+}
+
+input, select { 
+    width: 100%; 
+    padding: 6px; 
+    margin-bottom: 10px; 
+    border: 1px solid #999; 
+    box-sizing: border-box; 
+    font-size: 13px;
+    border-radius: 4px;
+    height: 32px;
+}
+
+/* Полностью фиксированная плашка сверху — теперь контент под ней не виден */
+.sticky-action-bar {
+    position: fixed; 
+    top: 0;            /* Прижимаем строго к верху экрана (без зазора в 10px), чтобы контент выше тоже перекрывался */
+    left: 0;
+    right: 0;
+    margin: 0 auto; 
+    
+    /* Оставляем ширину на весь экран мобилки, чтобы получился сплошной козырек */
+    width: 100%; 
+    max-width: 360px; 
+    
+    height: 56px;
+    
+    /* Включаем жесткий непрозрачный фон */
+    background-color: #ffffff !important; 
+    
+    border-bottom: 2px solid #ccc;
+    padding: 10px 15px; /* Кнопки внутри будут стоять ровно */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    z-index: 9999; 
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45%;
+    height: 36px;
+    background: #7f8c8d;
+    color: white !important;
+    text-decoration: none !important;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.save_btn_sticky {
+    width: 50% !important;
+    height: 36px;
+    background: #27ae60 !important;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+/* Блок быстрых кнопок глушения */
+.mute-quick-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+.btn-mute-quick {
+    width: auto !important;
+    flex: 1;
+    padding: 8px 2px !important; 
+    font-size: 12px !important;
+    background: #34495e;
+    color: white;
+    border-radius: 4px;
+    text-align: center;
+    border: none;
+}
+
+.btn-mute-reset { background: #c0392b !important; }
+
+/* Ручной ввод даты/времени */
+.mute-manual-time input {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Резиновая таблица расписания */
+#schedules_table {
+    width: 100%;
+    margin-top: 10px;
+}
+
+#schedules_table th {
+    font-size: 11px;
+    padding: 4px 2px;
+}
+
+#schedules_container input {
+    height: 30px; 
+    margin-bottom: 0; 
+    padding: 2px 4px;
+    font-size: 12px; 
+}
+
+.delete-period-btn {
+    width: 100% !important;
+    height: 30px;
+    padding: 0 !important;
+    background: #e74c3c !important;
+    color: #000 !important;
+    font-weight: bold !important;
+    border: none;
+    font-size: 18px;
+    border-radius: 4px;
+}
+
+hr { border: none; border-top: 1px solid #ccc; margin: 15px 0; }
+
+.thresholds-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: 10px;                     
+    margin-bottom: 15px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;        
+}
+
+.input-group label {
+    font-size: 11px;               
+    color: #666;
+    margin-bottom: 3px;
+}
+
+/* Новая блочная структура строк расписания */
+.sched-row-flex {
+    display: flex;
+    gap: 8px;
+    padding: 4px 6px;
+}
+
+.sched-row-flex .input-group {
+    flex: 1; 
+}
+
+/* Стилизация объединенной ячейки удаления */
+.delete-cell-merged {
+    vertical-align: middle !important;
+    text-align: center;
+    background: #fafafa;
+    border: 1px solid #ccc;
+    padding: 0 5px !important;
+}
+
+.btn-delete-period-merged {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    background: #e74c3c !important;
+    color: white !important;
+    font-weight: bold !important;
+    border: none;
+    font-size: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 32px;
+}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель Мониторинга</title>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="/static/css/index.css?v=9">
+    <link rel="stylesheet" href="/static/css/grafik.css">
+</head>
+<body>
+
+    <div class="control-panel">
+        <div class="control-group">
+            <a href="/categories" class="btn-toggle">⚙️ Справочники</a>
+            <!-- <button class="btn-toggle" id="btn-phone-trigger" title="Настройка уведомлений GSM">📱 Номер</button> -->
+             <button class="btn-toggle" id="btn-phone-trigger" title="Сервисные настройки">🛠️ Сервис</button>
+        </div>
+
+        <div id="phone-settings-panel" class="service-panel">
+            <div class="service-panel-container">
+                
+                <div id="phone-input-block" class="phone-input-group">
+                    <label class="phone-input-label">Номер телефона администратора:</label>
+                    <div class="phone-input-row">
+                        <input type="text" id="global_admin_phone" class="phone-field" placeholder="+79181234567">
+                        <button id="btn-save-phone" class="btn-phone-save">
+                            ОК
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="sort-actions-block" class="sort-actions-group">
+                    <button id="btn-sort-start" class="btn-toggle btn-sort-start">Порядок</button>
+                    <button id="btn-sort-submit" class="btn-toggle btn-sort-submit">Готово</button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="control-group">
+            <button class="btn-toggle" data-view="table">Таблица</button>
+            <button class="btn-toggle" data-view="cards">Карточки</button>
+            <button class="btn-toggle" id="btn-filter-alerts">Аварии</button>
+        </div>
+        <div class="control-group">
+            <button class="btn-group-toggle" data-val="none">Все</button>
+            <button class="btn-group-toggle" data-val="location">По локациям</button>
+            <button class="btn-group-toggle" data-val="group">По группам</button>
+        </div>
+    </div>
+
+    <div class="main-wrapper">
+        <div id="ui-container"></div>
+    </div>
+
+
+    <script type="text/template" id="template-table-layout">
+        <table class="dashboard-table">
+            <thead>
+                <tr>
+                    <th>Название датчика</th>
+                    <th class="col-narrow">Значение</th>
+                    <th class="col-narrow">Пороги</th>
+                    <th class="col-narrow">Режим</th>
+                    <th class="col-narrow">Время</th>
+                </tr>
+            </thead>
+            <tbody class="table-body-target"></tbody>
+        </table>
+    </script>
+
+    <script type="text/template" id="template-table-row">
+    <tr id="row-[%uid%]" class="[%status_class%] [%offline_class%]">
+        <td class="col-name">
+            <a href="/settings/[%sensor_id%]?type=[%type%]" class="sensor-setting-link">
+                [%name%]
+            </a>
+        </td>
+        <td class="col-narrow clickable-trigger cell-clickable" data-sensor-id="[%sensor_id%]" data-type="[%type%]">
+            <b data-field="value" class="temp-val sensor-value-text">[%display_value%]</b>
+        </td>
+        <td class="col-narrow cell-limits">[%display_min%] .. [%display_max%]</td>
+        <td class="col-narrow cell-mode">[%mode_label%]</td>
+        <td class="col-narrow cell-time"><span data-field="time" class="time-val">[%time_str%]</span></td>
+    </tr>
+    <tr id="chart-row-[%uid%]" class="chart-row chart-row-hidden">
+        <td colspan="5">
+            <div class="chart-container"><canvas id="canvas-[%uid%]"></canvas></div>
+        </td>
+    </tr>
+</script>
+
+    <script type="text/template" id="template-card">
+        <div id="row-[%uid%]" class="sensor-card [%status_class%] [%offline_class%]">
+            <div class="card-header">
+                <span class="card-time">[%time_str%]</span>
+                <span class="card-meta">[%meta_label%]</span>
+                <a href="/settings/[%sensor_id%]?type=[%type%]" class="card-edit-btn">⚙️</a>
+            </div>
+            <div class="card-body clickable-trigger card-body-clickable" data-sensor-id="[%sensor_id%]" data-type="[%type%]">
+                <div class="card-name">[%name%]</div>
+
+                <div class="card-value-wrapper">
+                    <span data-field="value" class="card-value">[%display_value%]</span>
+                    <div class="mute-container">
+                        <span class="mute-icon-display">[%mute_icon%]</span>
+                        <span class="mute-time-display">[%mute_until%]</span>
+                    </div>
+                </div>
+
+            </div>
+            <div class="card-footer">
+                <span class="card-limits">[%display_min%] .. [%display_max%]</span>
+                <span class="card-schedule-time">[%schedule_time%]</span>
+                <span class="card-tag">[%mode_label%]</span>
+            </div>
+            <div id="chart-row-[%uid%]" class="chart-row card-chart-row chart-row-hidden">
+                <div class="chart-container"><canvas id="canvas-[%uid%]"></canvas></div>
+            </div>
+        </div>
+    </script>
+
+    <script type="text/template" id="template-sort-layout">
+        <table class="dashboard-table sort-table-mode">
+            <thead>
+                <tr>
+                    <th>Название датчика</th>
+                    <th class="col-sort-btn">Вверх</th>
+                    <th class="col-sort-btn">Вниз</th>
+                </tr>
+            </thead>
+            <tbody class="table-sort-body-target"></tbody>
+        </table>
+    </script>
+
+    <script type="text/template" id="template-sort-row">
+        <tr class="sort-item-row" data-sensor-id="[%sensor_id%]" data-type="[%type%]">
+            <td class="col-name cell-sort-name">[%name%]</td>
+            <td class="col-narrow cell-up-action cell-sort-action-pad">[%btn_up%]</td>
+            <td class="col-narrow cell-down-action cell-sort-action-pad">[%btn_down%]</td>
+        </tr>
+    </script>
+
+    <script src="/static/js/grafik_plugin.js"></script>
+    <script src="/static/js/grafik.js"></script>
+    <script src="/static/js/index.js"></script>
+</body>
+</html>

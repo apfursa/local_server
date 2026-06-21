@@ -328,7 +328,6 @@ def handle_ui_config():
     except Exception as err:
         return jsonify({"status": "error", "message": str(err)}), 500
 
-# dbfhg
 @api_bp.route('/schedules/<int:sensor_id>', methods=['GET'])
 def get_sensor_schedules(sensor_id):
     """Возвращает все интервалы расписания для конкретного датчика и типа данных."""

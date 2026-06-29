@@ -1,0 +1,116 @@
+/* Базовые настройки страницы */
+body { 
+    font-family: Arial, sans-serif; 
+    background: #f4f4f4; 
+    display: flex; 
+    justify-content: center; 
+    padding: 10px; 
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Карточка: один в один как в настройках справочников */
+.card { 
+    background: white; 
+    padding: 15px; 
+    border: 1px solid #ccc;
+    width: 100%;          
+    max-width: 360px;     
+    position: relative;
+    padding-top: 60px !important; 
+    box-sizing: border-box;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+/* Заголовок страницы */
+h2 { 
+    margin-top: 0; 
+    color: #000; 
+    font-size: 15px; 
+    text-align: center; 
+    border-bottom: 1px solid #ccc; 
+    padding-bottom: 5px; 
+    margin-bottom: 15px;
+}
+
+/* Контейнер для подписи и инпута */
+.cat-control label { 
+    display: block;
+    margin: 10px 0 3px 0; 
+    font-size: 18px; 
+    color: #000; 
+    font-weight: bold; 
+}
+
+.cat-control input { 
+    width: 100%; 
+    padding: 6px; 
+    margin-bottom: 10px; 
+    border: 1px solid #999; 
+    box-sizing: border-box; 
+    font-size: 22px;
+    background: #fff;
+    height: 32px;
+    border-radius: 4px;
+}
+
+/* Синхронный sticky-bar в шапке карточки */
+.sticky-action-bar {
+    position: sticky;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #ffffff;
+    border-bottom: 1px solid #ccc;
+    padding: 6px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    z-index: 10;
+    margin-top: -60px; 
+    margin-bottom: 15px;
+    width: calc(100% + 30px); 
+    margin-left: -15px;
+}
+
+/* Кнопка Назад */
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45%;
+    height: 36px;
+    background: #7f8c8d;
+    color: white !important;
+    text-decoration: none !important;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+.back-btn:hover {
+    background: #95a5a6;
+}
+
+/* Кнопка Сохранить */
+.save_btn_sticky {
+    width: 50% !important;
+    height: 36px;
+    background: #27ae60 !important;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+.save_btn_sticky:hover {
+    background: #2ecc71 !important;
+}

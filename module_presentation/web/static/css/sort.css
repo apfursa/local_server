@@ -1,0 +1,176 @@
+/* Базовые настройки страницы */
+body { 
+    font-family: Arial, sans-serif; 
+    background: #f4f4f4; 
+    display: flex; 
+    justify-content: center; 
+    padding: 10px; 
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Карточка: один в один как в настройках справочников */
+.card { 
+    background: white; 
+    padding: 15px; 
+    border: 1px solid #ccc;
+    width: 100%;          
+    max-width: 360px;     
+    position: relative;
+    padding-top: 60px !important; 
+    box-sizing: border-box;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+/* Заголовок страницы */
+h2 { 
+    margin-top: 0; 
+    color: #000; 
+    font-size: 15px; 
+    text-align: center; 
+    border-bottom: 1px solid #ccc; 
+    padding-bottom: 5px; 
+    margin-bottom: 15px;
+}
+
+/* Синхронный sticky-bar в шапке карточки */
+.sticky-action-bar {
+    position: sticky;
+    top: -10px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #ffffff;
+    border-bottom: 1px solid #ccc;
+    padding: 6px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    z-index: 10;
+    margin-top: -60px; 
+    margin-bottom: 15px;
+    width: calc(100% + 30px); 
+    margin-left: -15px;
+}
+
+/* Кнопка Назад */
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45%;
+    height: 36px;
+    background: #7f8c8d;
+    color: white !important;
+    text-decoration: none !important;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+.back-btn:hover { background: #95a5a6; }
+
+/* Кнопка Сохранить */
+.save_btn_sticky {
+    width: 50% !important;
+    height: 36px;
+    background: #27ae60 !important;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+.save_btn_sticky:hover { background: #2ecc71 !important; }
+
+/* КОНТЕЙНЕР ДЛЯ СКРОЛЛА ТАБЛИЦЫ */
+.table-container {
+    max-height: 460px;          /* Ограничиваем высоту, чтобы карточка не улетала вниз */
+    overflow-y: auto;           /* Вертикальный скролл при переполнении */
+    overflow-x: hidden;         /* Запрещаем горизонтальный скролл */
+    margin-top: 5px;
+    border: 1px solid #ccc;     
+    border-radius: 4px;
+    -webkit-overflow-scrolling: touch; /* Плавный скролл на смартфонах */
+}
+
+/* Стили таблицы сортировки */
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.dashboard-table th {
+    background-color: #ebebeb;
+    color: #333;
+    font-weight: bold;
+    padding: 8px;
+    border: 1px solid #ccc;
+    text-align: left;
+    position: sticky;           /* Фиксированная шапка */
+    top: 0;
+    z-index: 2;
+}
+
+.dashboard-table td {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    text-align: left;
+    background: #fff;
+    vertical-align: middle;
+}
+
+/* Твои специфичные стили из ТЗ */
+.col-sort-btn {
+    width: 60px;
+    text-align: center !important;
+}
+
+.cell-sort-name {
+    font-weight: bold;
+    font-size: 14px;
+    padding: 10px 5px;
+}
+
+.cell-sort-action-pad {
+    padding: 5px;
+    text-align: center;
+}
+
+/* Аккуратные кнопки перемещения (по стилистике как в справочнике) */
+.btn-sort-action {
+    background: #34495e;
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.1s;
+}
+
+.btn-sort-up:hover { background: #2980b9; }   /* Синеет при наведении вверх */
+.btn-sort-down:hover { background: #2c3e50; }
+
+/* Эффект нажатия пальцем для смартфонов */
+.btn-sort-action:active {
+    transform: scale(1.15);
+}
+
+/* Класс для пустых/заблокированных ячеек (первая и последняя строки) */
+.cell-sort-disabled {
+    background-color: #f9f9f9 !important;
+}

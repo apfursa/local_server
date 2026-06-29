@@ -7,44 +7,51 @@
     <script src="/static/js/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <link rel="stylesheet" href="/static/css/index.css?v=9">
+    <link rel="stylesheet" href="/static/css/index.css?v=11">
     <link rel="stylesheet" href="/static/css/grafik.css">
 </head>
 <body>
 
+    <div id="side-menu" class="side-menu">
+        <a href="/categories" class="menu-item">Справочник</a>
+        <a href="/phone" class="menu-item">Телефон</a>
+        <a href="/sort" class="menu-item">Расположение датчиков</a>
+    </div>
+    <div id="menu-overlay" class="menu-overlay"></div>
+
     <div class="control-panel">
-        <div class="control-group">
-            <a href="/categories" class="btn-toggle">⚙️ Справочники</a>
-            <!-- <button class="btn-toggle" id="btn-phone-trigger" title="Настройка уведомлений GSM">📱 Номер</button> -->
-             <button class="btn-toggle" id="btn-phone-trigger" title="Сервисные настройки">🛠️ Сервис</button>
-        </div>
-
-        <div id="phone-settings-panel" class="service-panel">
-            <div class="service-panel-container">
-                
-                <div id="phone-input-block" class="phone-input-group">
-                    <label class="phone-input-label">Номер телефона администратора:</label>
-                    <div class="phone-input-row">
-                        <input type="text" id="global_admin_phone" class="phone-field" placeholder="+79181234567">
-                        <button id="btn-save-phone" class="btn-phone-save">
-                            ОК
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="sort-actions-block" class="sort-actions-group">
-                    <button id="btn-sort-start" class="btn-toggle btn-sort-start">Порядок</button>
-                    <button id="btn-sort-submit" class="btn-toggle btn-sort-submit">Готово</button>
-                </div>
-
-            </div>
-        </div>
+        <!-- <div class="control-group">
+            <button class="btn-toggle" id="btn-burger-menu">☰</button>
+            <button class="btn-toggle active" data-view="table">📊</button>
+            <button class="btn-toggle" data-view="cards">🎴</button>
+            <button class="btn-toggle" id="btn-filter-alerts">⚠️</button>
+        </div> -->
 
         <div class="control-group">
-            <button class="btn-toggle" data-view="table">Таблица</button>
-            <button class="btn-toggle" data-view="cards">Карточки</button>
-            <button class="btn-toggle" id="btn-filter-alerts">Аварии</button>
+            <button class="btn-toggle" id="btn-burger-menu">☰</button>
+            <button class="btn-toggle active" data-view="table">Табл</button>
+            <button class="btn-toggle" data-view="cards">Карт</button>
+            <button class="btn-toggle" id="btn-filter-alerts">⚠️</button>
         </div>
+
+        <!-- <div class="control-group">
+            <button class="btn-toggle" id="btn-burger-menu">☰</button>
+            
+            <button class="btn-toggle active" data-view="table" title="Вид таблицы">
+                <svg width="18" height="18" viewBox="0 0 24 24" class="icon-svg">
+                    <path d="M4 14h4v-4H4v4zm0 5h4v-4H4v4zM4 9h4V5H4v4zm5 5h11v-4H9v4zm0 5h11v-4H9v4zM9 5v4h11V5H9z"/>
+                </svg>
+            </button>
+            
+            <button class="btn-toggle" data-view="cards" title="Вид карточек">
+                <svg width="18" height="18" viewBox="0 0 24 24" class="icon-svg">
+                    <path d="M4 11h5V5H4v6zm0 8h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-8h5V5h-5v6zm6-6v6h5V5h-5z"/>
+                </svg>
+            </button>
+            
+            <button class="btn-toggle" id="btn-filter-alerts">⚠️</button>
+        </div> -->
+        
         <div class="control-group">
             <button class="btn-group-toggle" data-val="none">Все</button>
             <button class="btn-group-toggle" data-val="location">По локациям</button>
@@ -73,25 +80,25 @@
     </script>
 
     <script type="text/template" id="template-table-row">
-    <tr id="row-[%uid%]" class="[%status_class%] [%offline_class%]">
-        <td class="col-name">
-            <a href="/settings/[%sensor_id%]?type=[%type%]" class="sensor-setting-link">
-                [%name%]
-            </a>
-        </td>
-        <td class="col-narrow clickable-trigger cell-clickable" data-sensor-id="[%sensor_id%]" data-type="[%type%]">
-            <b data-field="value" class="temp-val sensor-value-text">[%display_value%]</b>
-        </td>
-        <td class="col-narrow cell-limits">[%display_min%] .. [%display_max%]</td>
-        <td class="col-narrow cell-mode">[%mode_label%]</td>
-        <td class="col-narrow cell-time"><span data-field="time" class="time-val">[%time_str%]</span></td>
-    </tr>
-    <tr id="chart-row-[%uid%]" class="chart-row chart-row-hidden">
-        <td colspan="5">
-            <div class="chart-container"><canvas id="canvas-[%uid%]"></canvas></div>
-        </td>
-    </tr>
-</script>
+        <tr id="row-[%uid%]" class="[%status_class%] [%offline_class%]">
+            <td class="col-name">
+                <a href="/settings/[%sensor_id%]?type=[%type%]" class="sensor-setting-link">
+                    [%name%]
+                </a>
+            </td>
+            <td class="col-narrow clickable-trigger cell-clickable" data-sensor-id="[%sensor_id%]" data-type="[%type%]">
+                <b data-field="value" class="temp-val sensor-value-text">[%display_value%]</b>
+            </td>
+            <td class="col-narrow cell-limits">[%display_min%] .. [%display_max%]</td>
+            <td class="col-narrow cell-mode">[%mode_label%]</td>
+            <td class="col-narrow cell-time"><span data-field="time" class="time-val">[%time_str%]</span></td>
+        </tr>
+        <tr id="chart-row-[%uid%]" class="chart-row chart-row-hidden">
+            <td colspan="5">
+                <div class="chart-container"><canvas id="canvas-[%uid%]"></canvas></div>
+            </td>
+        </tr>
+    </script>
 
     <script type="text/template" id="template-card">
         <div id="row-[%uid%]" class="sensor-card [%status_class%] [%offline_class%]">
@@ -121,27 +128,6 @@
                 <div class="chart-container"><canvas id="canvas-[%uid%]"></canvas></div>
             </div>
         </div>
-    </script>
-
-    <script type="text/template" id="template-sort-layout">
-        <table class="dashboard-table sort-table-mode">
-            <thead>
-                <tr>
-                    <th>Название датчика</th>
-                    <th class="col-sort-btn">Вверх</th>
-                    <th class="col-sort-btn">Вниз</th>
-                </tr>
-            </thead>
-            <tbody class="table-sort-body-target"></tbody>
-        </table>
-    </script>
-
-    <script type="text/template" id="template-sort-row">
-        <tr class="sort-item-row" data-sensor-id="[%sensor_id%]" data-type="[%type%]">
-            <td class="col-name cell-sort-name">[%name%]</td>
-            <td class="col-narrow cell-up-action cell-sort-action-pad">[%btn_up%]</td>
-            <td class="col-narrow cell-down-action cell-sort-action-pad">[%btn_down%]</td>
-        </tr>
     </script>
 
     <script src="/static/js/grafik_plugin.js"></script>

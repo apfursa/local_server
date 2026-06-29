@@ -24,7 +24,7 @@
         <button type="button" class="btn-mute-quick" data-hours="1">+1 ч</button>
         <button type="button" class="btn-mute-quick" data-hours="2">+2 ч</button>
         <button type="button" class="btn-mute-quick" data-hours="3">+3 ч</button>
-        <button type="button" class="btn-mute-quick" data-hours="8">+8 ч</button>
+        <!-- <button type="button" class="btn-mute-quick" data-hours="8">+8 ч</button> -->
         <button type="button" class="btn-mute-quick btn-mute-reset" id="btn-mute-clear">Сброс</button>
     </div>
 
@@ -68,6 +68,11 @@
     <select id="group_select">
         <option value="">Выберите группу...</option>
     </select>
+
+    <div class="timeout-settings-group">
+        <label for="offline_timeout">⏰ Контроль связи (минут бездействия):</label>
+        <input type="number" id="offline_timeout" min="1" max="1440" placeholder="Например: 5">
+    </div>
 
     <hr>
 

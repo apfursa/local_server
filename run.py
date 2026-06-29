@@ -29,6 +29,8 @@ def create_app():
     # 3. sync_controller живет в модуле синхронизации
     from module_sync.controllers.sync_controller import sync_bp
     from module_business_logic.controllers.category_controller import category_bp
+    from module_business_logic.controllers.phone_controller import phone_bp
+    from module_business_logic.controllers.sort_controller import sort_bp
 
     # Регистрация блупринтов с явным указанием их префиксов (URL-путей)
     app.register_blueprint(views_bp)  # Статика (/)
@@ -37,6 +39,8 @@ def create_app():
     app.register_blueprint(sync_bp, url_prefix='/sync')  # Синхронизация (/sync/...)
     app.register_blueprint(alarm_bp, url_prefix='/api/alarm')
     app.register_blueprint(category_bp, url_prefix='/api/categories')
+    app.register_blueprint(phone_bp, url_prefix='/phone')
+    app.register_blueprint(sort_bp, url_prefix='/sort')
 
     # Подгружаем модели для работы миграций
     with app.app_context():
@@ -66,9 +70,11 @@ if __name__ == '__main__':
     # Фоновые процессы из их родных модулей
     from module_ingestion.background.mqtt import start_mqtt
     from module_sync.background.sync import start_sync
+    from module_network.discovery import start_udp
 
     start_mqtt(app)
     start_sync()
+    start_udp()
 
     print("Фоновые процессы запущены.")
     print("Сервер стартует на http://localhost:80")

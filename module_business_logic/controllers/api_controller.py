@@ -243,11 +243,15 @@ def get_latest_state():
                 f_alarm_max = base_alarm_max
                 mode_label = "base"
 
+            # Извлекаем кастомный таймаут контроля связи (если нет, то 5)
+            custom_timeout = setting.offline_timeout if (setting and setting.offline_timeout) else 5
+
             # Передаем все 4 новые уставки в обновленный процессор данных
             sensor_payload = process_sensor_data(
                 last_meas, setting, mode_label,
                 f_alarm_min, f_relay_min, f_relay_max, f_alarm_max,
-                schedules_list
+                schedules_list,
+                offline_timeout=custom_timeout
             )
 
             # Собираем локацию и группу через слеш
@@ -352,6 +356,7 @@ def get_sensor_schedules(sensor_id):
             "alarm_max": s.alarm_max
         } for s in schedules]
 
+        return jsonify(result), 200
         return jsonify(result), 200
     except Exception as err:
         return jsonify({"status": "error", "message": str(err)}), 500

@@ -11,13 +11,13 @@
 
 <div class="card">
     <div class="sticky-action-bar">
-        <a href="/" class="back-btn">← Назад</a>
-        <button class="save_btn_sticky" onclick="addCategory()">Добавить</button>
+        <a href="/" id="btn_back" class="back-btn">← Назад</a>
+        <button id="btn_save" class="save_btn_sticky">Добавить</button>
     </div>
 
     <h2>Управление справочниками</h2>
     
-    <div class="cat-control">
+    <!-- <div class="cat-control">
         <label>Название:</label>
         <input type="text" id="cat_name" placeholder="Например: Кухня">
         
@@ -26,6 +26,25 @@
             <option value="location">Локация</option>
             <option value="group">Группа</option>
         </select>
+    </div> -->
+
+    <div class="cat-control">
+        <label>Название:</label>
+        <input type="text" id="cat_name" placeholder="Например: Кухня">
+        
+        <label>Тип справочника:</label>
+        <div class="cat-switch-container">
+            <input type="radio" name="cat_type" value="location" id="type_location" checked>
+            <input type="radio" name="cat_type" value="group" id="type_group">
+
+            <label for="type_location" class="switch-label label-left">Локация</label>
+            
+            <div class="cat-switch-wrapper">
+                <span class="cat-switch-slider"></span>
+            </div>
+            
+            <label for="type_group" class="switch-label label-right">Группа</label>
+        </div>
     </div>
 
     <div class="table-container">
@@ -34,6 +53,7 @@
                 <tr>
                     <th>Тип</th>
                     <th>Название</th>
+                    <th style="width: 40px; text-align: center;">✏️</th>
                     <th style="width: 40px; text-align: center;">❌</th>
                 </tr>
             </thead>

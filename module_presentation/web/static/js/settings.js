@@ -145,6 +145,7 @@ $(document).ready(function() {
         $('#edit_relay_min').val(data.relay_min);
         $('#edit_relay_max').val(data.relay_max);
         $('#edit_alarm_max').val(data.alarm_max);
+        $('#offline_timeout').val(data.offline_timeout);
         
         // Разбираем mute_until от сервера
         if (data.mute_until) {
@@ -219,6 +220,117 @@ $(document).ready(function() {
     // 3. СОХРАНЕНИЕ ДАННЫХ (POST)
     // ==========================================
     $('#save_btn').on('click', function() {
+
+        // Сначала очищаем старые подсветки ошибок со всех инпутов на странице
+        $('.input-error').removeClass('input-error');
+
+        // -----------------------------------------------------------------
+        // ОБНОВЛЕННАЯ ФУНКЦИЯ ВАЛИДАЦИИ (возвращает ошибку и виновников)
+        // -----------------------------------------------------------------
+        function checkChainValues(amRaw, rmRaw, rxRaw, axRaw, selectors) {
+            var am = amRaw !== "" && amRaw !== null ? parseFloat(amRaw) : null;
+            var rm = rmRaw !== "" && rmRaw !== null ? parseFloat(rmRaw) : null;
+            var rx = rxRaw !== "" && rxRaw !== null ? parseFloat(rxRaw) : null;
+            var ax = axRaw !== "" && axRaw !== null ? parseFloat(axRaw) : null;
+
+            // Проверяем пары по цепочке. Возвращаем текст и селекторы полей, которые подсветим
+            if (am !== null && rm !== null && am >= rm) 
+                return { msg: "«Авария Мин» должна быть меньше «Реле Мин»", fields: [selectors.am, selectors.rm] };
+            
+            if (rm !== null && rx !== null && rm >= rx) 
+                return { msg: "«Реле Мин» должно быть меньше «Реле Макс»", fields: [selectors.rm, selectors.rx] };
+            
+            if (rx !== null && ax !== null && rx >= ax) 
+                return { msg: "«Реле Макс» должно быть меньше «Авария Макс»", fields: [selectors.rx, selectors.ax] };
+            
+            if (am !== null && ax !== null && am >= ax) 
+                return { msg: "«Авария Мин» должна быть меньше «Авария Макс»", fields: [selectors.am, selectors.ax] };
+            
+            if (am !== null && rx !== null && am >= rx) 
+                return { msg: "«Авария Мин» должна быть меньше «Реле Макс»", fields: [selectors.am, selectors.rx] };
+            
+            if (rm !== null && ax !== null && rm >= ax) 
+                return { msg: "«Реле Мин» должно быть меньше «Авария Макс»", fields: [selectors.rm, selectors.ax] };
+            
+            return null; // Ошибок нет
+        }
+
+        // 1. Валидация БАЗОВЫХ уставок датчика
+        var baseSelectors = {
+            am: '#edit_alarm_min',
+            rm: '#edit_relay_min',
+            rx: '#edit_relay_max',
+            ax: '#edit_alarm_max'
+        };
+
+        var baseError = checkChainValues(
+            $(baseSelectors.am).val(),
+            $(baseSelectors.rm).val(),
+            $(baseSelectors.rx).val(),
+            $(baseSelectors.ax).val(),
+            baseSelectors
+        );
+
+        if (baseError) {
+            alert("Ошибка в базовых порогах датчика:\n" + baseError.msg);
+            
+            // Подсвечиваем оба проблемных поля
+            baseError.fields.forEach(f => $(f).addClass('input-error'));
+            // Фокусируемся на первом из них
+            $(baseError.fields[0]).focus();
+            return; 
+        }
+
+        // 2. Валидация порогов внутри каждого периода РАСПИСАНИЯ
+        var scheduleValidationError = null;
+        var periodCounter = 0;
+        var validatedPeriods = [];
+
+        $('#schedules_container tr[data-period]').each(function() {
+            var periodId = $(this).data('period');
+            if (validatedPeriods.includes(periodId)) return;
+            validatedPeriods.push(periodId);
+            
+            periodCounter++;
+            var rows = $(`#schedules_container tr[data-period="${periodId}"]`);
+            
+            var pAlarmMin = rows.find('.schedule-alarm-min').val();
+            var pRelayMin = rows.find('.schedule-relay-min').val();
+            var pRelayMax = rows.find('.schedule-relay-max').val();
+            var pAlarmMax = rows.find('.schedule-alarm-max').val();
+
+            // Для расписания селекторами выступают классы внутри конкретных строк этого периода
+            var periodSelectors = {
+                am: '.schedule-alarm-min',
+                rm: '.schedule-relay-min',
+                rx: '.schedule-relay-max',
+                ax: '.schedule-alarm-max'
+            };
+
+            var periodError = checkChainValues(pAlarmMin, pRelayMin, pRelayMax, pAlarmMax, periodSelectors);
+            if (periodError) {
+                var tStart = rows.find('.schedule-start').val() || '??:??';
+                var tEnd = rows.find('.schedule-end').val() || '??:??';
+                
+                alert(`Ошибка в периоде №${periodCounter} (${tStart} - ${tEnd}):\n${periodError.msg}`);
+                
+                // Подсвечиваем элементы конкретно внутри этой группы строк (rows)
+                periodError.fields.forEach(function(className) {
+                    rows.find(className).addClass('input-error');
+                });
+                // Ставим фокус на первый ошибочный инпут этого периода
+                rows.find(periodError.fields[0]).focus();
+                
+                scheduleValidationError = true;
+                return false; // Выход из .each() jQuery
+            }
+        });
+
+        if (scheduleValidationError) {
+            return; // Прерываем выполнение, на сервер не шлем
+        }
+        // -----------------------------------------------------------------
+
         const schedulesArray = [];
         
         // Массив для хранения обработанных индексов, чтобы не дублировать сборку из-за 3-х строк
@@ -269,10 +381,12 @@ $(document).ready(function() {
         const payload = {
             type: dataType, 
             name: $('#sensor_name').val().trim(),
+            ui_type: $('#ui_type').val(),
             alarm_min: $('#edit_alarm_min').val() !== "" ? parseFloat($('#edit_alarm_min').val()) : null,
             relay_min: $('#edit_relay_min').val() !== "" ? parseFloat($('#edit_relay_min').val()) : null,
             relay_max: $('#edit_relay_max').val() !== "" ? parseFloat($('#edit_relay_max').val()) : null, 
             alarm_max: $('#edit_alarm_max').val() !== "" ? parseFloat($('#edit_alarm_max').val()) : null,
+            offline_timeout: $('#offline_timeout').val() !== "" ? parseInt($('#offline_timeout').val(), 10) : 5,
             location: $('#location_select').val(),
             group: $('#group_select').val(),       
             mute_until: muteUntilPayload, 

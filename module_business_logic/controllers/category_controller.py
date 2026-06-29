@@ -29,6 +29,40 @@ def add_category():
     return jsonify(new_cat.to_dict()), 201
 
 
+@category_bp.route('/', methods=['PUT'])
+def update_category():
+    data = request.json
+    if not data or 'id' not in data or 'name' not in data or 'type' not in data:
+        return jsonify({"error": "Данные неполные для обновления"}), 400
+
+    cat_id = data.get('id')
+    new_name = data.get('name').strip()
+    new_type = data.get('type')
+
+    # Валидация данных
+    if not new_name:
+        return jsonify({"error": "Название не может быть пустым"}), 400
+    if new_type not in ['location', 'group']:
+        return jsonify({"error": "Неверный тип справочника"}), 400
+
+    # Поиск записи в БД
+    category = Category.query.get(cat_id)
+    if not category:
+        return jsonify({"error": "Справочник не найден"}), 404
+
+    # Обновляем поля модели
+    category.name = new_name
+    category.type = new_type
+
+    db.session.commit()
+
+    return jsonify({
+        "status": "success",
+        "message": "Справочник успешно обновлен",
+        "category": category.to_dict()
+    }), 200
+
+
 @category_bp.route('/', methods=['DELETE'])
 def delete_category():
     data = request.json

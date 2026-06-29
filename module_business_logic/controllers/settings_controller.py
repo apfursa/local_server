@@ -28,6 +28,7 @@ def get_sensor_settings(sensor_id):
                     "relay_min": setting.relay_min if setting.relay_min is not None else "",
                     "relay_max": setting.relay_max if setting.relay_max is not None else "",
                     "alarm_max": setting.alarm_max if setting.alarm_max is not None else "",
+                    "offline_timeout": setting.offline_timeout,
                     "location": setting.location.name if setting.location else "",
                     "group": setting.group.name if setting.group else "",
                     "ui_type": setting.ui_type,
@@ -41,6 +42,7 @@ def get_sensor_settings(sensor_id):
                     "relay_min": "",
                     "relay_max": "",
                     "alarm_max": "",
+                    "offline_timeout": 5,
                     "location": "Дом",
                     "group": "Климат",
                     "ui_type": "numeric"
@@ -58,6 +60,55 @@ def save_sensor_settings(sensor_id):
         if not d_type:
             return jsonify({"status": "error", "message": "Параметр 'type' обязателен"}), 400
 
+        # -----------------------------------------------------------------
+        # ВСПРЕСК-ФУНКЦИЯ ВАЛИДАЦИИ СТРОГОЙ ЦЕПОЧКИ ПОРОГОВ (Python-версия)
+        # -----------------------------------------------------------------
+        def check_threshold_chain(al_min, re_min, re_max, al_max):
+            try:
+                am = float(al_min) if (al_min is not None and str(al_min).strip() != "") else None
+                rm = float(re_min) if (re_min is not None and str(re_min).strip() != "") else None
+                rx = float(re_max) if (re_max is not None and str(re_max).strip() != "") else None
+                ax = float(al_max) if (al_max is not None and str(al_max).strip() != "") else None
+            except (ValueError, TypeError):
+                return "Некорректный формат числового значения порогов"
+
+            if am is not None and rm is not None and am >= rm: return "«Авария Мин» должна быть меньше «Реле Мин»"
+            if rm is not None and rx is not None and rm >= rx: return "«Реле Мин» должно быть меньше «Реле Макс»"
+            if rx is not None and ax is not None and rx >= ax: return "«Реле Макс» должно быть меньше «Авария Макс»"
+            if am is not None and ax is not None and am >= ax: return "«Авария Мин» должна быть меньше «Авария Макс»"
+            if am is not None and rx is not None and am >= rx: return "«Авария Мин» должна быть меньше «Реле Макс»"
+            if rm is not None and ax is not None and rm >= ax: return "«Реле Мин» должно быть меньше «Авария Макс»"
+            return None
+
+        # 1. Валидация БАЗОВЫХ уставок из запроса
+        base_error = check_threshold_chain(
+            req_data.get('alarm_min'),
+            req_data.get('relay_min'),
+            req_data.get('relay_max'),
+            req_data.get('alarm_max')
+        )
+        if base_error:
+            return jsonify({"status": "error", "message": f"Ошибка в базовых порогах: {base_error}"}), 400
+
+        # 2. Валидация уставок внутри каждого ПЕРИОДА РАСПИСАНИЯ
+        if 'schedules' in req_data and isinstance(req_data['schedules'], list):
+            for idx, period in enumerate(req_data['schedules'], start=1):
+                period_error = check_threshold_chain(
+                    period.get('alarm_min'),
+                    period.get('relay_min'),
+                    period.get('relay_max'),
+                    period.get('alarm_max')
+                )
+                if period_error:
+                    t_start = period.get('time_start', '??:??')
+                    t_end = period.get('time_end', '??:??')
+                    return jsonify({
+                        "status": "error",
+                        "message": f"Ошибка в расписании, период №{idx} ({t_start} - {t_end}): {period_error}"
+                    }), 400
+        # -----------------------------------------------------------------
+
+        # Пошла оригинальная рабочая логика сохранения в БД
         setting = db.session.query(Setting).filter_by(sensor_id=sensor_id, data_type=d_type).first()
 
         if not setting:
@@ -77,17 +128,24 @@ def save_sensor_settings(sensor_id):
             cat = Category.query.filter_by(name=group_name, type='group').first()
             setting.group_id = cat.id if cat else None
 
-        # Чтение и валидация 4-х основных порогов датчика
+        # Чтение и запись 4-х основных порогов датчика
         for field in ['alarm_min', 'relay_min', 'relay_max', 'alarm_max']:
             if field in req_data:
                 val = req_data[field]
                 parsed_val = float(val) if (val is not None and str(val).strip() != "") else None
                 setattr(setting, field, parsed_val)
 
+        # Чтение и запись таймаута отсутствия связи
+        if 'offline_timeout' in req_data:
+            try:
+                t_val = int(req_data['offline_timeout'])
+                setting.offline_timeout = t_val if t_val > 0 else 5
+            except (ValueError, TypeError):
+                setting.offline_timeout = 5
+
         # Обработка динамического расписания уставок
         if 'schedules' in req_data:
             periods_list = req_data['schedules']
-            # Ожидается массив: [{"time_start": "08:00", "time_end": "20:00", "alarm_min": 15, "relay_min": 18, "relay_max": 25, "alarm_max": 28}]
             if isinstance(periods_list, list):
                 for period in periods_list:
                     try:
@@ -101,7 +159,7 @@ def save_sensor_settings(sensor_id):
                         return jsonify({"status": "error",
                                         "message": "Время начала периода должно быть меньше времени окончания"}), 400
 
-                # Вызываем метод модели для перезаписи расписания (мы обновили его на Шаге 2)
+                # Вызываем метод модели для перезаписи расписания
                 DeviceSchedule.save_schedules_for_sensor(
                     s_id=sensor_id,
                     d_type=d_type,
@@ -125,80 +183,79 @@ def save_sensor_settings(sensor_id):
         db.session.rollback()
         return jsonify({"status": "error", "message": f"Внутренняя ошибка сервера: {str(err)}"}), 500
 
+# @settings_bp.route('/admin_phone', methods=['GET'])
+# def get_admin_phone():
+#     """Получение номера телефона для фронтенда из глобальных настроек"""
+#     try:
+#         setting = db.session.query(SystemSetting).filter_by(key='admin_phone').first()
+#         if setting:
+#             return jsonify({"value": setting.value}), 200
+#         return jsonify({"value": ""}), 200  # Если номера еще нет в базе
+#     except Exception as err:
+#         return jsonify({"status": "error", "message": str(err)}), 500
+#
+#
+# @settings_bp.route('/admin_phone', methods=['POST'])
+# def save_admin_phone():
+#     """Сохранение или обновление номера телефона в глобальных настройках"""
+#     try:
+#         data = request.get_json()
+#         if not data or 'value' not in data:
+#             return jsonify({"status": "error", "message": "Неверные данные"}), 400
+#
+#         new_phone = data['value'].strip()
+#
+#         # Ищем существующую запись в новой таблице
+#         setting = db.session.query(SystemSetting).filter_by(key='admin_phone').first()
+#
+#         if setting:
+#             setting.value = new_phone
+#         else:
+#             setting = SystemSetting(
+#                 key='admin_phone',
+#                 name='Номер администратора',
+#                 value=new_phone,
+#                 data_type='string',
+#                 description='Номер для СМС-управления и дозвона при аварии'
+#             )
+#             db.session.add(setting)
+#
+#         db.session.commit()
+#         return jsonify({"status": "success", "message": "Номер успешно сохранен"}), 200
+#     except Exception as err:
+#         db.session.rollback()
+#         return jsonify({"status": "error", "message": str(err)}), 500
 
-@settings_bp.route('/admin_phone', methods=['GET'])
-def get_admin_phone():
-    """Получение номера телефона для фронтенда из глобальных настроек"""
-    try:
-        setting = db.session.query(SystemSetting).filter_by(key='admin_phone').first()
-        if setting:
-            return jsonify({"value": setting.value}), 200
-        return jsonify({"value": ""}), 200  # Если номера еще нет в базе
-    except Exception as err:
-        return jsonify({"status": "error", "message": str(err)}), 500
-
-
-@settings_bp.route('/admin_phone', methods=['POST'])
-def save_admin_phone():
-    """Сохранение или обновление номера телефона в глобальных настройках"""
-    try:
-        data = request.get_json()
-        if not data or 'value' not in data:
-            return jsonify({"status": "error", "message": "Неверные данные"}), 400
-
-        new_phone = data['value'].strip()
-
-        # Ищем существующую запись в новой таблице
-        setting = db.session.query(SystemSetting).filter_by(key='admin_phone').first()
-
-        if setting:
-            setting.value = new_phone
-        else:
-            setting = SystemSetting(
-                key='admin_phone',
-                name='Номер администратора',
-                value=new_phone,
-                data_type='string',
-                description='Номер для СМС-управления и дозвона при аварии'
-            )
-            db.session.add(setting)
-
-        db.session.commit()
-        return jsonify({"status": "success", "message": "Номер успешно сохранен"}), 200
-    except Exception as err:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(err)}), 500
-
-@settings_bp.route('/save_sort_order', methods=['POST'])
-def save_sort_order():
-    """Принимает упорядоченный список датчиков и сохраняет их индексы в поле sort_order."""
-    try:
-        req_data = request.get_json()
-        if not isinstance(req_data, list):
-            return jsonify({"status": "error", "message": "Ожидался массив данных"}), 400
-
-        # В цикле обновляем порядок на основе индекса элемента в массиве
-        for index, item in enumerate(req_data):
-            sensor_id = item.get('sensor_id')
-            d_type = item.get('type')
-
-            if sensor_id is None or not d_type:
-                continue
-
-            # Ищем существующую запись
-            setting = db.session.query(Setting).filter_by(sensor_id=sensor_id, data_type=d_type).first()
-
-            # Если записи нет (датчик работал по дефолтам), создаем её
-            if not setting:
-                setting = Setting(sensor_id=sensor_id, data_type=d_type)
-                db.session.add(setting)
-
-            # Присваиваем порядковый номер (начиная с 0 или 1, index в enumerate как раз идет по порядку)
-            setting.sort_order = index
-
-        db.session.commit()
-        return jsonify({"status": "success", "message": "Порядок датчиков успешно сохранен"}), 200
-
-    except Exception as err:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": f"Внутренняя ошибка сервера: {str(err)}"}), 500
+# @settings_bp.route('/save_sort_order', methods=['POST'])
+# def save_sort_order():
+#     """Принимает упорядоченный список датчиков и сохраняет их индексы в поле sort_order."""
+#     try:
+#         req_data = request.get_json()
+#         if not isinstance(req_data, list):
+#             return jsonify({"status": "error", "message": "Ожидался массив данных"}), 400
+#
+#         # В цикле обновляем порядок на основе индекса элемента в массиве
+#         for index, item in enumerate(req_data):
+#             sensor_id = item.get('sensor_id')
+#             d_type = item.get('type')
+#
+#             if sensor_id is None or not d_type:
+#                 continue
+#
+#             # Ищем существующую запись
+#             setting = db.session.query(Setting).filter_by(sensor_id=sensor_id, data_type=d_type).first()
+#
+#             # Если записи нет (датчик работал по дефолтам), создаем её
+#             if not setting:
+#                 setting = Setting(sensor_id=sensor_id, data_type=d_type)
+#                 db.session.add(setting)
+#
+#             # Присваиваем порядковый номер (начиная с 0 или 1, index в enumerate как раз идет по порядку)
+#             setting.sort_order = index
+#
+#         db.session.commit()
+#         return jsonify({"status": "success", "message": "Порядок датчиков успешно сохранен"}), 200
+#
+#     except Exception as err:
+#         db.session.rollback()
+#         return jsonify({"status": "error", "message": f"Внутренняя ошибка сервера: {str(err)}"}), 500

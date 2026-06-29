@@ -116,96 +116,6 @@ a.btn-toggle:hover {
     background: #f0f0f0;
 }
 
-/* Панель настройки номера телефона */
-/* Главная подложка панели сервиса (в HTML у неё inline-стиля не было, задаём базовый) */
-.service-panel {
-    width: 100%;
-    box-sizing: border-box;
-    display: none; /* Панель изначально скрыта */
-}
-
-/* Внутренний контейнер панели */
-.service-panel-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-/* Блок ввода телефона (метка + инпут с кнопкой) */
-.phone-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-/* Текстовая метка */
-.phone-input-label {
-    font-size: 16px;
-    font-weight: bold;
-    margin: 0;
-    color: #000;
-}
-
-/* Строка, где инпут и кнопка стоят рядом */
-.phone-input-row {
-    display: flex;
-    gap: 5px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Поле ввода номера телефона */
-.phone-field {
-    margin: 0;
-    padding: 8px;
-    font-size: 20px;
-    font-weight: bold;
-    height: 38px;
-    flex-grow: 1;
-    min-width: 0; /* Важно: позволяет инпуту уменьшаться на узких экранах */
-    box-sizing: border-box;
-}
-
-/* Зелёная кнопка ОК */
-.btn-phone-save {
-    width: auto;
-    padding: 0 15px;
-    background: #27ae60;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    height: 38px;
-    box-sizing: border-box;
-}
-
-/* Блок кнопок сортировки порядка */
-.sort-actions-group {
-    width: 100%;
-}
-
-/* Кнопка "Порядок" */
-.btn-sort-start {
-    margin: 0;
-    width: 100%;
-    background: #34495e;
-    color: #fff;
-    border-color: #2c3e50;
-    padding: 12px 5px;
-}
-
-/* Кнопка "Готово" */
-.btn-sort-submit {
-    margin: 0;
-    width: 100%;
-    background: #2980b9;
-    color: #fff;
-    border-color: #2471a3;
-    padding: 12px 5px;
-    display: none; /* Изначально скрыта, как в оригинале */
-}
-
 /* ЗАГОЛОВКИ ГРУПП (ПРИ ГРУППИРОВКЕ) */
 .group-title {
     font-size: 15px;
@@ -282,7 +192,7 @@ input[type="text"] {
     flex-grow: 1; 
     padding: 2px 4px; 
     border: 1px solid #aaa; 
-    font-size: 12px; 
+    /* font-size: 12px;  */
     background: transparent; 
     transition: background 0.2s;
 }
@@ -385,12 +295,12 @@ input[type="text"]:focus {
     white-space: nowrap;
 }
 .mute-time-display {
-    color: #ffffff !important; 
+    /* color: #ffffff !important;  */
     font-size: 13px; 
     font-weight: bold;
     white-space: nowrap;
     font-family: monospace; 
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6); 
+    /* text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.6);  */
 }
 .mute-time-display:empty { display: none; }
 
@@ -410,7 +320,7 @@ input[type="text"]:focus {
 }
 .card-schedule-time {
     font-size: 13px;
-    color: #000;
+    /* color: #000; */
     font-weight: bold;
     font-family: monospace;
 }
@@ -430,43 +340,63 @@ input[type="text"]:focus {
     width: 100%; 
     margin-top: 5px; 
 }
-
 /* ==========================================================================
-   СКВОЗНАЯ СИСТЕМА ИНДИКАЦИИ (ЦВЕТА СТРОК И КАРТОЧЕК)
+   СКВОЗНАЯ СИСТЕМА ИНДИКАЦИИ И ЧИТАЕМОСТИ (ОПТИМИЗИРОВАННАЯ)
    ========================================================================== */
 
-/* 1. ЧЕРНЫЙ — Модуль не на связи (оффлайн) */
+/* -------------------------------------------------------------------------
+   1. ЧЕРНЫЙ — Модуль не на связи (оффлайн)
+   ------------------------------------------------------------------------- */
 .sensor-card.status-black, tr.status-black { 
     background: #1a1a1a !important; 
     color: #ffffff !important;
     border: 1px solid #000000;
 }
+/* Выбеливаем абсолютно весь текст, линки и иконки на черной карточке */
 .sensor-card.status-black .card-name, 
-.sensor-card.status-black .card-value, 
+.sensor-card.status-black .card-value,
+.sensor-card.status-black .card-time,
+.sensor-card.status-black .card-meta,
+.sensor-card.status-black .card-limits,
+.sensor-card.status-black .card-schedule-time,
+.sensor-card.status-black .card-tag,
+.sensor-card.status-black .mute-time-display,
+.sensor-card.status-black .card-edit-btn,
 tr.status-black td, 
 tr.status-black .temp-val {
     color: #ffffff !important;
 }
-.sensor-card.status-black .card-header, 
-.sensor-card.status-black .card-footer,
-.sensor-card.status-black .card-meta {
-    color: #aaa !important;
-}
-.sensor-card.status-black .card-edit-btn { 
+/* Картинку-шестеренку (если это img) инвертируем в белый */
+.sensor-card.status-black .card-edit-btn img { 
     filter: brightness(0) invert(1); 
 }
 
-/* 2. СЕРЫЙ — Нет установленных порогов контроля */
+/* -------------------------------------------------------------------------
+   2. СЕРЫЙ — Нет установленных порогов контроля (Новый стиль: Темный монохром)
+   ------------------------------------------------------------------------- */
 .sensor-card.status-gray, tr.status-gray { 
-    background: #e0e0e0 !important; 
-    color: #333333 !important;
-    border: 1px solid #cccccc;
+    background: #888 !important; /* Меняем бэкграунд на глубокий серый */
+    color: #ffffff !important;
+    border: 1px solid #333333;
 }
-tr.status-gray td, tr.status-gray .temp-val {
-    color: #333333 !important;
+/* Принудительно выбеливаем все внутренние элементы серой карточки */
+.sensor-card.status-gray .card-name,
+.sensor-card.status-gray .card-value,
+.sensor-card.status-gray .card-time,
+.sensor-card.status-gray .card-meta,
+.sensor-card.status-gray .card-limits,
+.sensor-card.status-gray .card-schedule-time,
+.sensor-card.status-gray .card-tag,
+.sensor-card.status-gray .mute-time-display,
+.sensor-card.status-gray .card-edit-btn,
+tr.status-gray td, 
+tr.status-gray .temp-val {
+    color: #ffffff !important;
 }
 
-/* 3. ЗЕЛЕНЫЙ — Всё в норме */
+/* -------------------------------------------------------------------------
+   3. ЗЕЛЕНЫЙ — Всё в норме
+   ------------------------------------------------------------------------- */
 .sensor-card.status-ok, tr.status-ok { 
     background: #d4edda !important; 
     color: #155724 !important;
@@ -476,38 +406,42 @@ tr.status-gray td, tr.status-gray .temp-val {
     color: #155724 !important; 
 }
 
-/* 4. КРАСНЫЙ — Авария! Превышен максимум */
+/* -------------------------------------------------------------------------
+   4. КРАСНЫЙ — Авария! Превышен максимум
+   ------------------------------------------------------------------------- */
 .sensor-card.status-high, tr.status-high { 
     background: #ff4d4d !important; 
-    color: #ffffff !important;      
+    color: #ffffff !important;       
     border: 1px solid #cc0000;
 }
-.sensor-card.status-high .card-value, tr.status-high .temp-val { 
-    color: #fff !important; 
-    font-weight: bold; 
-}
+.sensor-card.status-high .card-value, 
 .sensor-card.status-high .card-meta,
 .sensor-card.status-high .card-time,
 .sensor-card.status-high .card-limits,
-.sensor-card.status-high .card-tag {
-    color: #fff !important;
-}
-
-/* 5. СИНИЙ — Авария! Упало ниже минимума */
-.sensor-card.status-low, tr.status-low { 
-    background: #3399ff !important; 
-    color: #ffffff !important;      
-    border: 1px solid #0066cc;
-}
-.sensor-card.status-low .card-value, tr.status-low .temp-val { 
-    color: #fff !important; 
+.sensor-card.status-high .card-tag,
+tr.status-high .temp-val,
+tr.status-high td { 
+    color: #ffffff !important; 
     font-weight: bold; 
 }
+
+/* -------------------------------------------------------------------------
+   5. СИНИЙ — Авария! Упало ниже минимума
+   ------------------------------------------------------------------------- */
+.sensor-card.status-low, tr.status-low { 
+    background: #3399ff !important; 
+    color: #ffffff !important;       
+    border: 1px solid #0066cc;
+}
+.sensor-card.status-low .card-value, 
 .sensor-card.status-low .card-meta,
 .sensor-card.status-low .card-time,
 .sensor-card.status-low .card-limits,
-.sensor-card.status-low .card-tag {
-    color: #fff !important;
+.sensor-card.status-low .card-tag,
+tr.status-low .temp-val,
+tr.status-low td { 
+    color: #ffffff !important; 
+    font-weight: bold; 
 }
 
 /* ==========================================================================
@@ -530,28 +464,6 @@ tr.status-gray td, tr.status-gray .temp-val {
     0% { transform: scale(1); }
     50% { transform: scale(1.03); }
     100% { transform: scale(1); }
-}
-
-/* Стили для кнопок перемещения в режиме сортировки */
-.btn-sort-action {
-    display: block;
-    width: 100%;
-    height: 34px;
-    font-size: 16px;
-    font-weight: bold;
-    background: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-.btn-sort-action:active {
-    background: #e0e0e0;
-}
-/* Класс для пустой заблокированной ячейки */
-.cell-sort-disabled {
-    background: #f4f4f4 !important;
-    cursor: not-allowed;
 }
 
 /* ==========================================================================
@@ -631,18 +543,97 @@ tr.status-gray td, tr.status-gray .temp-val {
     display: none;
 }
 
-/* Ширина колонок для кнопок перемещения в шапке таблицы */
-.col-sort-btn {
-    width: 70px;
+/* 4. КРАСНЫЙ — Авария! */
+.sensor-card.status-high .card-time,
+tr.status-high .card-time {
+    color: #fff !important; /* Установить белый цвет для времени */
 }
 
-/* Название датчика в режиме сортировки */
-.cell-sort-name {
+/* 5. СИНИЙ — Упало ниже минимума */
+.sensor-card.status-low .card-time,
+tr.status-low .card-time {
+    color: #fff !important; /* Установить белый цвет для времени */
+}
+
+/* ==========================================================================
+   БОКОВОЕ ВЫЕЗЖАЮЩЕЕ БУРГЕР-МЕНЮ
+   ========================================================================== */
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 100%;
+    background: #2c3e50;
+    z-index: 2000;
+    transition: transform 0.3s ease;
+    transform: translateX(-100%); /* Изначально полностью скрыто слева */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+    padding-top: 20px;
+    box-sizing: border-box;
+}
+
+/* Класс, который добавляется через JS для открытия */
+.side-menu.menu-open {
+    transform: translateX(0);
+}
+
+/* Пункты меню */
+.menu-item {
+    display: block;
+    color: #ecf0f1;
+    padding: 15px 20px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: 1px solid #34495e;
+    transition: background 0.2s;
+}
+
+.menu-item:hover {
+    background: #34495e;
+}
+
+/* Прозрачная подложка фона при открытом меню */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Класс открытия подложки */
+.menu-overlay.overlay-open {
+    display: block;
+    opacity: 1;
+}
+
+.cards-grid-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.no-data-msg {
+    text-align: center;
+    padding: 20px;
+    color: #666;
     font-size: 14px;
-    padding: 10px 5px;
 }
 
-/* Паддинги для ячеек с кнопками Вверх/Вниз */
-.cell-sort-action-pad {
-    padding: 5px;
+/* Красный счетчик количества аварий на кнопке */
+.alert-badge-counter {
+    color: #ff0000;
+    font-weight: bold;
+    margin-left: 4px;
+    font-size: 18px;
+    vertical-align: middle;
 }

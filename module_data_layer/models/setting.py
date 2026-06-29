@@ -36,6 +36,7 @@ class Setting(db.Model):
     relay_min = db.Column(db.Float, nullable=True)
     relay_max = db.Column(db.Float, nullable=True)
     alarm_max = db.Column(db.Float, nullable=True)
+    offline_timeout = db.Column(db.Integer, default=5, nullable=False)
 
     mute_until = db.Column(db.DateTime, nullable=True)
     sort_order = db.Column(db.Integer, default=0, nullable=False)

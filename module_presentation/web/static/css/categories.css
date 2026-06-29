@@ -41,8 +41,7 @@ h2 {
     font-weight: bold; 
 }
 
-.cat-control input, 
-.cat-control select { 
+.cat-control input[type="text"] { 
     width: 100%; 
     padding: 6px; 
     margin-bottom: 10px; 
@@ -188,4 +187,115 @@ h2 {
 }
 .btn-del-cat:hover {
     background: #c0392b;
+}
+
+/* Кнопка карандаша в таблице */
+.btn-edit-cat {
+    background: #f39c12; /* Оранжевый цвет для привлечения внимания */
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-edit-cat:hover {
+    background: #e67e22; /* Чуть темнее при наведении мыши */
+}
+
+/* Эффект нажатия пальцем для смартфонов */
+.btn-edit-cat:active {
+    transform: scale(1.15);
+}
+
+/* Мягкая подсветка строки, которую мы сейчас редактируем */
+.cat-table tbody tr.row-editing-active td {
+    background-color: #fdf2e2 !important; /* Легкий бежево-оранжевый оттенок */
+    border-top: 1px solid #f39c12;
+    border-bottom: 1px solid #f39c12;
+}
+
+/* Главный контейнер, который выстраивает текст и овал в одну линию */
+.cat-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding: 5px 0;
+    background: #fafafa;
+    border-radius: 6px;
+    border: 1px dashed #ccc;
+}
+
+/* Боковые текстовые подписи */
+.switch-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #7f8c8d;
+    transition: color 0.2s ease;
+    user-select: none;
+}
+
+/* Оболочка самого переключателя */
+.cat-switch-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 56px;
+    height: 30px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Скрываем радио-кнопки, которые теперь лежат прямо в контейнере */
+.cat-switch-container input[type="radio"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+/* Наш ОВАЛ (задний фон тумблера) */
+.cat-switch-slider {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #bdc3c7;
+    border-radius: 30px;
+    transition: background-color 0.2s ease;
+}
+
+/* Наш КРУЖОК внутри овала */
+.cat-switch-slider:before {
+    content: "";
+    position: absolute;
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: #2c3e50;
+    border-radius: 50%;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ЛОГИКА ДЛЯ ПРАВОГО ПОЛОЖЕНИЯ (Выбрана Группа) */
+#type_group:checked ~ .cat-switch-wrapper .cat-switch-slider {
+    background-color: #d2b4de; 
+}
+#type_group:checked ~ .cat-switch-wrapper .cat-switch-slider:before {
+    transform: translateX(26px);
+    background-color: #8e44ad; 
+}
+
+/* ЛОГИКА ДЛЯ ЛЕВОГО ПОЛОЖЕНИЯ (Выбрана Локация) */
+#type_location:checked ~ .cat-switch-wrapper .cat-switch-slider {
+    background-color: #aed6f1;
+}
+#type_location:checked ~ .cat-switch-wrapper .cat-switch-slider:before {
+    background-color: #2980b9;
 }

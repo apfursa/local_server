@@ -43,7 +43,7 @@ h2 {
 label { 
     display: block;
     margin: 10px 0 3px 0; 
-    font-size: 14px; 
+    font-size: 16px; 
     color: #000; 
     font-weight: bold; 
 }
@@ -126,7 +126,7 @@ input, select {
     width: auto !important;
     flex: 1;
     padding: 8px 2px !important; 
-    font-size: 12px !important;
+    font-size: 15px !important;
     background: #34495e;
     color: white;
     border-radius: 4px;
@@ -188,7 +188,7 @@ hr { border: none; border-top: 1px solid #ccc; margin: 15px 0; }
 }
 
 .input-group label {
-    font-size: 11px;               
+    font-size: 15px;               
     color: #666;
     margin-bottom: 3px;
 }
@@ -225,4 +225,52 @@ hr { border: none; border-top: 1px solid #ccc; margin: 15px 0; }
     border-radius: 4px;
     cursor: pointer;
     line-height: 32px;
+}
+
+/* Подсветка ошибочных полей при валидации */
+.input-error {
+    border-color: #e74c3c !important;
+    background-color: #fdf2f2 !important;
+    box-shadow: 0 0 4px rgba(231, 76, 60, 0.4);
+}
+
+/* Контейнер для настройки таймаута связи */
+.timeout-settings-group {
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+
+.timeout-settings-group label {
+    margin-bottom: 5px;
+}
+
+.timeout-settings-group input {
+    margin-bottom: 0;
+}
+
+/* Красивое разделение между периодами расписания */
+#schedules_container tr:nth-child(3n) td {
+    border-bottom: 3px solid #387189; /* Плотная линия между периодами */
+}
+
+/* Линия для объединенной ячейки удаления (так как она привязана к первой строке) */
+#schedules_container tr:nth-child(3n-2) .delete-cell-merged {
+    border-bottom: 3px solid #387189;
+}
+
+/* Опционально: делаем легкий отступ внутри флекс-контейнеров, чтобы поля не липли к линиям */
+.sched-row-flex {
+    padding: 6px 6px !important;
+}
+
+/* Центрируем только текстовые метки над инпутами в расписании */
+.sched-row-flex .input-group label {
+    text-align: center;
+    width: 100%;
+}
+
+/* Центрируем текстовые метки для БАЗОВЫХ порогов датчика */
+.thresholds-grid .input-group label {
+    text-align: center;
+    width: 100%;
 }

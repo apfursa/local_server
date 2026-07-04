@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление прошивками (OTA)</title>
+    <script src="/static/js/jquery.min.js"></script>
+    <link rel="stylesheet" href="/static/css/settings.css">
+    <style>
+        .firmware-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            table-layout: fixed;
+        }
+        .firmware-table th {
+            background-color: #f4f4f4;
+            padding: 4px 2px;
+            border: 1px solid #ccc;
+            font-size: 11px;
+            text-align: center;
+            word-break: break-word;
+        }
+        .firmware-table td {
+            padding: 4px 2px;
+            border: 1px solid #ccc;
+            font-size: 11px;
+            text-align: center;
+            vertical-align: middle;
+            word-break: break-word;
+        }
+        /* Ширина колонок */
+        .firmware-table th:nth-child(1), .firmware-table td:nth-child(1) { width: 16%; } /* Версия */
+        .firmware-table th:nth-child(2), .firmware-table td:nth-child(2) { width: 28%; } /* Описание */
+        .firmware-table th:nth-child(3), .firmware-table td:nth-child(3) { width: 26%; } /* Загружена */
+        .firmware-table th:nth-child(4), .firmware-table td:nth-child(4) { width: 10%; } /* Файл */
+        .firmware-table th:nth-child(5), .firmware-table td:nth-child(5) { width: 20%; } /* Действия */
+
+        .firmware-table tr.row-active {
+            background: #e8f5e9;
+            font-weight: bold;
+        }
+        .badge-ok     { background:#4caf50; color:#fff; padding:1px 4px; border-radius:8px; font-size:10px; }
+        .badge-err    { background:#f44336; color:#fff; padding:1px 4px; border-radius:8px; font-size:10px; }
+        .badge-active { background:#1565c0; color:#fff; padding:1px 4px; border-radius:8px; font-size:10px; }
+        .badge-arch   { background:#aaa;    color:#fff; padding:1px 4px; border-radius:8px; font-size:10px; }
+
+        .btn-activate {
+            background: #1565c0;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 4px;
+            font-size: 10px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-activate:disabled {
+            background: #aaa;
+            cursor: default;
+        }
+        .btn-delete {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 3px 4px;
+            font-size: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 3px;
+        }
+        .btn-delete:disabled {
+            background: #ccc;
+            cursor: default;
+        }
+        .group-header {
+            background: #2c3e50;
+            color: #fff;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+        .status-msg {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+            font-size: 13px;
+        }
+        .status-msg.success { background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; }
+        .status-msg.error   { background:#ffebee; color:#c62828; border:1px solid #ef9a9a; }
+        .no-data {
+            color:#666; text-align:center; padding:15px;
+            border:1px dashed #ccc; margin-top:10px;
+        }
+        code { font-size: 11px; word-break: break-all; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="sticky-action-bar">
+        <a href="/" class="back-btn">← Назад</a>
+        <button id="upload_btn" class="save_btn_sticky">Загрузить</button>
+    </div>
+
+    <h2 style="margin-top:10px;">📦 Управление прошивками (OTA)</h2>
+
+    <!-- Форма загрузки -->
+    <hr>
+    <h3>➕ Загрузить новую прошивку</h3>
+
+    <div class="thresholds-grid">
+        <div class="input-group">
+            <label>ID устройства</label>
+            <input type="number" id="upload_sensor_id" placeholder="Например: 39" min="1">
+        </div>
+        <div class="input-group">
+            <label>Версия</label>
+            <input type="number" id="upload_version" placeholder="Например: 4" min="1">
+        </div>
+    </div>
+
+    <label>Описание (необязательно):</label>
+    <input type="text" id="upload_description" placeholder="Например: Исправлен баг с OTA">
+
+    <label>Файл прошивки (.bin):</label>
+    <input type="file" id="upload_file" accept=".bin">
+
+    <div class="status-msg" id="status_msg"></div>
+
+    <!-- Список прошивок -->
+    <hr>
+    <h3>📋 История прошивок</h3>
+    <div id="firmware_list_container">
+        <div class="no-data">Загрузка...</div>
+    </div>
+</div>
+
+<script>
+function loadFirmwareList() {
+    $.get('/api/ota/list', function(data) {
+        var container = $('#firmware_list_container');
+
+        if (!data || data.length === 0) {
+            container.html('<div class="no-data">Прошивки не загружены</div>');
+            return;
+        }
+
+        // Группируем по sensor_id
+        var groups = {};
+        data.forEach(function(f) {
+            if (!groups[f.sensor_id]) groups[f.sensor_id] = [];
+            groups[f.sensor_id].push(f);
+        });
+
+        var html = '';
+        Object.keys(groups).forEach(function(sensorId) {
+            var items = groups[sensorId];
+            html += '<div class="group-header">Устройство ID: ' + sensorId + '</div>';
+            html += '<table class="firmware-table">';
+            html += '<thead><tr>';
+            html += '<th>Версия</th>';
+            html += '<th>Описание</th>';
+            html += '<th>Загружена</th>';
+            html += '<th>Файл</th>';
+            html += '<th>Действия</th>';
+            html += '</tr></thead><tbody>';
+
+            items.forEach(function(f) {
+                var rowClass = f.is_active ? 'row-active' : '';
+                var fileBadge = f.file_exists
+                    ? '<span class="badge-ok">✓</span>'
+                    : '<span class="badge-err">✗</span>';
+                var statusBadge = f.is_active
+                    ? '<span class="badge-active">Активна</span>'
+                    : '<span class="badge-arch">Архив</span>';
+
+                var activateDisabled = (f.is_active || !f.file_exists) ? 'disabled' : '';
+                var deleteDisabled = f.is_active ? 'disabled' : '';
+                var activateTitle = f.is_active ? 'Уже активна'
+                    : (!f.file_exists ? 'Файл отсутствует' : 'Активировать эту версию');
+
+                html += '<tr class="' + rowClass + '">';
+                html += '<td><b>v' + f.version + '</b></td>';
+                html += '<td>' + (f.description || '—') + '</td>';
+                html += '<td>' + f.uploaded_at + '</td>';
+                html += '<td>' + fileBadge + '</td>';
+                html += '<td>';
+                html += '<button class="btn-activate" data-id="' + f.id + '" '
+                      + activateDisabled + ' title="' + activateTitle + '">↩ Активировать</button>';
+                html += '<button class="btn-delete" data-id="' + f.id + '" '
+                      + deleteDisabled + ' title="Удалить из архива">🗑 Удалить</button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+        });
+
+        container.html(html);
+    }).fail(function() {
+        $('#firmware_list_container').html(
+            '<div class="no-data">Ошибка загрузки списка прошивок</div>'
+        );
+    });
+}
+
+// Загрузка прошивки
+$('#upload_btn').on('click', function() {
+    var sensor_id   = $('#upload_sensor_id').val();
+    var version     = $('#upload_version').val();
+    var description = $('#upload_description').val();
+    var file        = $('#upload_file')[0].files[0];
+
+    if (!sensor_id || !version) { showStatus('Укажите ID устройства и версию', 'error'); return; }
+    if (!file)                  { showStatus('Выберите .bin файл', 'error'); return; }
+    if (!file.name.endsWith('.bin')) { showStatus('Допускаются только .bin файлы', 'error'); return; }
+
+    var formData = new FormData();
+    formData.append('sensor_id', sensor_id);
+    formData.append('version', version);
+    formData.append('description', description);
+    formData.append('file', file);
+
+    $('#upload_btn').prop('disabled', true).text('Загружаем...');
+
+    $.ajax({
+        url: '/api/ota/upload',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(resp) {
+            showStatus('✓ Загружена: ' + resp.filename + ' (v' + resp.version + ')', 'success');
+            $('#upload_sensor_id, #upload_version, #upload_description').val('');
+            $('#upload_file').val('');
+            loadFirmwareList();
+        },
+        error: function(xhr) {
+            var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Ошибка загрузки';
+            showStatus('✗ ' + msg, 'error');
+        },
+        complete: function() {
+            $('#upload_btn').prop('disabled', false).text('⬆️ Загрузить прошивку');
+        }
+    });
+});
+
+// Активировать версию (откат или переключение)
+$(document).on('click', '.btn-activate', function() {
+    if ($(this).prop('disabled')) return;
+    var fwId = $(this).data('id');
+    if (!confirm('Активировать эту версию прошивки?\nУстройство обновится при следующей проверке OTA.')) return;
+
+    $.ajax({
+        url: '/api/ota/activate/' + fwId,
+        type: 'POST',
+        success: function(resp) {
+            showStatus('✓ Активирована v' + resp.version + ' для устройства ' + resp.sensor_id, 'success');
+            loadFirmwareList();
+        },
+        error: function(xhr) {
+            var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Ошибка';
+            showStatus('✗ ' + msg, 'error');
+        }
+    });
+});
+
+// Удалить версию из архива
+$(document).on('click', '.btn-delete', function() {
+    if ($(this).prop('disabled')) return;
+    var fwId = $(this).data('id');
+    if (!confirm('Удалить эту версию прошивки?\nФайл будет удалён с сервера.')) return;
+
+    $.ajax({
+        url: '/api/ota/delete/' + fwId,
+        type: 'POST',
+        success: function() {
+            showStatus('✓ Версия удалена', 'success');
+            loadFirmwareList();
+        },
+        error: function(xhr) {
+            var msg = xhr.responseJSON ? xhr.responseJSON.error : 'Ошибка';
+            showStatus('✗ ' + msg, 'error');
+        }
+    });
+});
+
+function showStatus(msg, type) {
+    var el = $('#status_msg');
+    el.removeClass('success error').addClass(type).text(msg).show();
+    setTimeout(function() { el.hide(); }, 5000);
+}
+
+loadFirmwareList();
+</script>
+</body>
+</html>

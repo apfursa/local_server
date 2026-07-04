@@ -38,123 +38,6 @@ CURRENT_UI_CONFIG = {
     "group_by": "none"
 }
 
-# @api_bp.route('/latest', methods=['GET'])
-# def get_latest_state():
-#     """Возвращает актуальное состояние всех датчиков в системе с учетом расписаний."""
-#     response_data = []
-#
-#     try:
-#         # Шаг 1: Находим последние замеры для каждой комбинации датчика и типа
-#         subquery = db.session.query(
-#             func.max(Measurement.id).label('max_id')
-#         ).group_by(
-#             Measurement.sensor_id,
-#             Measurement.data_type
-#         ).subquery()
-#
-#         # Шаг 2: Извлекаем замеры
-#         latest_measurements = db.session.query(Measurement).filter(
-#             Measurement.id.in_(select(subquery.c.max_id))
-#         ).all()
-#
-#         # Шаг 3: Собираем карту устройств и настроек
-#         devices_map = {d.id: d for d in db.session.query(Device).all()}
-#         all_settings = db.session.query(Setting).all()
-#         settings_map = {(s.sensor_id, s.data_type): s for s in all_settings}
-#
-#         # Текущее время сервера в строковом формате "ЧЧ:ММ:СС" для точного сравнения с базой
-#         current_time_str = datetime.now().strftime("%H:%M:%S")
-#
-#         # Шаг 4: Формируем контракт
-#         for last_meas in latest_measurements:
-#             sensor_id = last_meas.sensor_id
-#             d_type = last_meas.data_type
-#             setting = settings_map.get((sensor_id, d_type))
-#
-#             # Метаданные датчика
-#             name = setting.name if (setting and setting.name) else f"Датчик {d_type} ({sensor_id})"
-#             ui_type = setting.ui_type if setting else 'numeric'
-#             location = setting.location.name if (setting and setting.location) else 'Дом'
-#             group = setting.group.name if (setting and setting.group) else 'Климат'
-#
-#             # Базовые пороги из таблицы настроек (если их нет в БД — оставляем None)
-#             base_min = setting.min if (setting and setting.min is not None) else None
-#             base_max = setting.max if (setting and setting.max is not None) else None
-#
-#             # Расчет статуса связи (онлайн, если ответ был меньше 5 минут назад)
-#             time_delta = datetime.now() - last_meas.timestamp
-#             is_online = time_delta.total_seconds() < 300.0
-#
-#             # Получаем все временные периоды расписания для этой комбинации
-#             schedules = db.session.query(DeviceSchedule).filter_by(
-#                 sensor_id=sensor_id,
-#                 data_type=d_type
-#             ).all()
-#
-#             schedules_list = []
-#             active_schedule_thresholds = None
-#             active_schedule_time = ""  # <-- ДОБАВЛЯЕМ ПЕРЕМЕННУЮ ДЛЯ ХРАНЕНИЯ ВРЕМЕНИ
-#
-#             for s in schedules:
-#                 # Наполняем архивный список для графиков/истории
-#                 schedules_list.append({
-#                     "id": s.id,
-#                     "time_start": s.time_start,
-#                     "time_end": s.time_end,
-#                     "min": float(s.param_min) if s.param_min is not None else None,
-#                     "max": float(s.param_max) if s.param_max is not None else None
-#                 })
-#
-#                 # Проверяем, попадает ли текущее время сервера внутрь этого интервала
-#                 # Текстовое сравнение строк "14:00:00" >= "08:00:00" в Python работает отлично
-#                 if s.time_start <= current_time_str <= s.time_end:
-#                     active_schedule_thresholds = {
-#                         "min": float(s.param_min) if s.param_min is not None else None,
-#                         "max": float(s.param_max) if s.param_max is not None else None
-#                     }
-#                     # Запоминаем интервал (обрезаем секунды для компактности: "14:00:00" -> "14:00")
-#                     t_start = s.time_start[:5]
-#                     t_end = s.time_end[:5]
-#                     active_schedule_time = f"({t_start} - {t_end})"  # Получится строка вида "(08:00..20:00)"
-#
-#             # Определение итоговых порогов и режима работы для фронтенда
-#             if active_schedule_thresholds:
-#                 # Если нашли точку в расписании — применяем её пороги
-#                 final_min = active_schedule_thresholds["min"]
-#                 final_max = active_schedule_thresholds["max"]
-#                 mode_label = "schedule"
-#             else:
-#                 # Расписания нет или сейчас "дыра" между интервалами — берем базу
-#                 final_min = base_min
-#                 final_max = base_max
-#                 mode_label = "base"
-#
-#             sensor_payload = process_sensor_data(last_meas, setting, mode_label, final_min, final_max, schedules_list)
-#             # Собираем локацию и группу через слеш (берём именно .name)
-#             loc = setting.location.name if (setting and setting.location) else ""
-#             grp = setting.group.name if (setting and setting.group) else ""
-#
-#             if loc and grp:
-#                 meta_label = f"{loc} / {grp}"
-#             elif loc or grp:
-#                 meta_label = loc if loc else grp
-#             else:
-#                 meta_label = ""  # Если ничего не задано, будет пусто
-#
-#             sensor_payload["meta_label"] = meta_label
-#             sensor_payload["schedule_time"] = active_schedule_time if mode_label == "schedule" else ""
-#             response_data.append(sensor_payload)
-#
-#             # Финальный шаг: сортируем response_data на основе sort_order из настроек.
-#             # Если для датчика нет настроек в базе, даем ему большой индекс (например, 999), чтобы он улетел в конец списка.
-#             response_data.sort(key=lambda x: settings_map.get((x['sensor_id'], x['type'])).sort_order
-#             if settings_map.get((x['sensor_id'], x['type'])) else 999)
-#
-#         return jsonify(response_data), 200
-#
-#     except Exception as err:
-#         return jsonify({"status": "error", "message": f"Внутренняя ошибка API: {str(err)}"}), 500
-
 @api_bp.route('/latest', methods=['GET'])
 def get_latest_state():
     """Возвращает актуальное состояние всех датчиков в системе с учетом расписаний."""
@@ -267,12 +150,67 @@ def get_latest_state():
 
             sensor_payload["meta_label"] = meta_label
             sensor_payload["schedule_time"] = active_schedule_time if mode_label == "schedule" else ""
+            sensor_payload["sort_order"] = setting.sort_order if setting else 999
             response_data.append(sensor_payload)
 
         # Финальный шаг: сортируем собранный response_data на основе sort_order из настроек.
         # Вынесено за пределы цикла `for` для правильной и быстрой работы.
-        response_data.sort(key=lambda x: settings_map.get((x['sensor_id'], x['type'])).sort_order
-                           if settings_map.get((x['sensor_id'], x['type'])) else 999)
+        response_data.sort(key=lambda x: x.get('sort_order') if x.get('sort_order') else 999)
+
+        # Добавляем реле в общий список
+        from module_data_layer.models.relay import Relay
+        # relays = db.session.query(Relay).filter_by(is_deleted=0).order_by(Relay.sort_order).all()
+        relays = db.session.query(Relay).filter_by(is_deleted=0).all()
+
+        for r in relays:
+            is_online = False
+            if r.last_seen:
+                timeout_sec = r.offline_timeout * 60
+                is_online = (datetime.now() - r.last_seen).total_seconds() < timeout_sec
+
+            # Цвет карточки
+            if not is_online:
+                status_class = 'status-black'
+            elif r.mode == 'force':
+                status_class = 'status-blue'
+            else:
+                status_class = 'status-ok'
+
+            state_label = '⚡ ВКЛ' if r.state else '○ ВЫКЛ'
+
+            loc = r.location.name if r.location else ""
+            grp = r.group.name if r.group else ""
+            meta_label = f"{loc} / {grp}" if (loc and grp) else (loc or grp or "")
+
+            response_data.append({
+                "uid": f"relay_{r.modul_id}_{r.relay_pin}",
+                "sensor_id": r.modul_id,
+                "type": f"relay_{r.relay_pin}",
+                "name": r.name or f"Реле {r.modul_id}/{r.relay_pin}",
+                "group": grp or "Без группы",
+                "group_id": r.group_id or 0,
+                "location": loc or "Без локации",
+                "location_id": r.location_id or 0,
+                "display_value": state_label,
+                "status_class": status_class,
+                "offline_class": '' if is_online else 'offline_class',
+                "mode_label": 'принуд.' if r.mode == 'force' else 'условия',
+                "mute_icon": '',
+                "mute_until": '',
+                "time_str": r.last_seen.strftime("%H:%M") if r.last_seen else "--:--",
+                "alarm_min": '-',
+                "relay_min": '-',
+                "relay_max": '-',
+                "alarm_max": '-',
+                "meta_label": meta_label,
+                "schedule_time": '',
+                "schedules": [],
+                "is_relay": True,  # ← флаг для фронтенда
+                "sort_order": r.sort_order if r.sort_order else 999
+            })
+
+        # Сортируем ВЕСЬ список (датчики + реле) вместе — ПОСЛЕ добавления реле
+        response_data.sort(key=lambda x: x.get('sort_order') if x.get('sort_order') else 999)
 
         return jsonify(response_data), 200
 

@@ -48,3 +48,12 @@ def settings_page(sensor_id):
 @views_bp.route('/categories')
 def show_categories():
     return _render_static_html('categories.html')
+
+@views_bp.route('/ota')
+def ota_page():
+    """Страница управления прошивками OTA."""
+    return _render_static_html('ota.html')
+
+@views_bp.route('/relay_settings/<int:modul_id>/<relay_pin>')
+def relay_settings_page(modul_id, relay_pin):
+    return _render_static_html('relay_settings.html')

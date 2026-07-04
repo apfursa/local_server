@@ -1,3 +1,4 @@
+from datetime import datetime
 from module_data_layer.core.db_config import db
 
 
@@ -9,6 +10,7 @@ class SystemSetting(db.Model):
     data_type = db.Column(db.String(20), default='string')  # string, integer, boolean
     name = db.Column(db.String(100), nullable=True)
     description = db.Column(db.String(255), nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=True)
 
     @classmethod
     def get_val(cls, key_name, default=None):

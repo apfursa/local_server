@@ -9,6 +9,7 @@ extern HTTPState httpState;
 
 void startGetRequest(String path, String params = ""); // Только запускает
 void handleHttp(); // Опрашивает состояние
+void startPostRequest(String path, String body);
 
 // Объявляем структуру здесь, чтобы она была видна всему проекту
 // struct HttpResponse {

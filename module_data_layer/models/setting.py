@@ -3,6 +3,7 @@
 Использует составной первичный ключ (sensor_id + data_type).
 """
 
+from datetime import datetime
 from module_data_layer.core.db_config import db
 
 
@@ -43,6 +44,8 @@ class Setting(db.Model):
 
     # Мягкое удаление из интерфейса (0 - активен, 1 - скрыт)
     is_deleted = db.Column(db.Integer, default=0, nullable=False)
+
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=True)
 
     def __repr__(self):
         return f"<Setting Sensor={self.sensor_id}, Type='{self.data_type}', Location='{self.location}'>"

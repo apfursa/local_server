@@ -637,3 +637,36 @@ tr.status-low .card-time {
     font-size: 18px;
     vertical-align: middle;
 }
+
+/* Реле в принудительном режиме */
+.sensor-card.status-blue, tr.status-blue {
+    background: #1565c0 !important;
+    color: #ffffff !important;
+    border: 1px solid #0d47a1;
+}
+.sensor-card.status-blue .card-value,
+.sensor-card.status-blue .card-time,
+.sensor-card.status-blue .card-meta,
+.sensor-card.status-blue .card-limits,
+.sensor-card.status-blue .card-tag,
+tr.status-blue td {
+    color: #ffffff !important;
+}
+
+.btn-device-filter-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1px solid #999;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    text-align: center;
+    box-sizing: border-box;
+}
+.btn-device-filter-btn.active {
+    background: #555 !important;
+    color: white !important;
+    border-color: #333 !important;
+}

@@ -20,7 +20,9 @@ extern GsmInitStep initStep;
 extern int ringCount;
 extern unsigned long muteUntilAll;
 extern String lastSmsContent;
+extern String lastSmsFrom;          // номер отправителя
 extern bool isCalling;
+extern bool newSmsReceived;         // флаг новой SMS
 
 // Прототипы функций
 void gsm_begin(long baud);
@@ -28,5 +30,6 @@ void handleGsmInit();
 bool gsm_handle();
 void gsm_call(String number);
 void gsm_clearBuffer();
+void gsm_sendSms(String number, String text);
 
 #endif

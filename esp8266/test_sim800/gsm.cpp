@@ -13,15 +13,15 @@ int ringCount = 0;
 unsigned long ringLastTime = 0;
 unsigned long muteUntilAll = 0;
 unsigned long lastCommandTime = 0;
+String lastSmsFrom = "";
+bool newSmsReceived = false;
 
 // --- Состояния ---
 enum State { IDLE, WAITING_FOR_AT, WAITING_FOR_CREG, SMS_READING };
 State gsm_state = IDLE;
 
-
 GsmInitStep initStep = INIT_IDLE;
 unsigned long stepStartTime = 0;
-
 
 // --- Функции ---
 
@@ -50,78 +50,6 @@ void gsm_begin(long baud) {
     Serial.println(">>> GSM готов к работе!");
     stepStartTime = millis();
 }
-
-/*
-void handleGsmInit() {
-    if (initStep == INIT_DONE) return;
-
-    yield();
-
-    // Таймаут — сброс и выход, switch выполнится в СЛЕДУЮЩЕЙ итерации
-    if (millis() - stepStartTime > 5000) {
-
-        Serial.printf("[GSM] Таймаут на шаге %d, повтор...\n", initStep); 
-        Serial.println("Таймаут шага, повтор с начала...");
-        initStep = INIT_CHECK_AT;
-        stepStartTime = millis();
-        buffer = "";
-        return; // ← КРИТИЧНО: выходим, не падаем в switch
-    }
-
-    Serial.printf("[GSM] Текущий шаг: %d\n", initStep);
-
-    switch (initStep) {
-        case INIT_CHECK_AT:
-            gsmSerial.println("AT");
-            stepStartTime = millis(); // ← сбрасываем таймер при каждой отправке
-            initStep = INIT_WAIT_AT;  // ← ждём ответ в отдельном состоянии
-            break;
-
-        case INIT_WAIT_AT:
-            if (buffer.indexOf("OK") != -1) {
-                buffer = "";
-                stepStartTime = millis();
-                gsmSerial.println("AT+CREG?");
-                initStep = INIT_CHECK_CREG;
-            }
-            break;
-
-        case INIT_CHECK_CREG:
-            if (buffer.indexOf("+CREG: 0,1") != -1) {
-                buffer = "";
-                stepStartTime = millis();
-                gsmSerial.println("AT+CMGF=1");
-                initStep = INIT_CMGF;
-            }
-            break;
-
-        case INIT_CMGF:
-            if (buffer.indexOf("OK") != -1) {
-                buffer = "";
-                stepStartTime = millis();
-                gsmSerial.println("AT+CNMI=2,2,0,0,0");
-                initStep = INIT_CNMI;
-            }
-            break;
-
-        case INIT_CNMI:
-            if (buffer.indexOf("OK") != -1) {
-                buffer = "";
-                stepStartTime = millis();
-                gsmSerial.println("AT+CLIP=1");
-                initStep = INIT_CLIP;
-            }
-            break;
-
-        case INIT_CLIP:
-            if (buffer.indexOf("OK") != -1) {
-                initStep = INIT_DONE;
-                Serial.println(">>> GSM готов к работе!");
-            }
-            break;
-    }
-}
-*/
 
 void handleGsmInitLine(String line) {
     switch (initStep) {
@@ -172,58 +100,10 @@ String getNextLine() {
 
 void processSMS(String text) {
     Serial.println("--- Пришло SMS ---");
+    Serial.printf("От: %s, Текст: %s\n", lastSmsFrom.c_str(), text.c_str());
     lastSmsContent = text;
+    newSmsReceived = true;  // ← сигнал что есть новая SMS для обработки
 }
-
-/*
-bool gsm_handle() {
-    while (gsmSerial.available()) {
-        buffer += (char)gsmSerial.read();
-    }
-
-    while (buffer.indexOf("\r\n") != -1) {
-        String line = getNextLine();
-        line.trim();
-        if (line.length() == 0) continue;
-
-        Serial.printf("[GSM RAW] %s\n", line.c_str());  // временно для отладки
-
-        // ← Сначала GSM инициализация проверяет строку
-        if (initStep != INIT_DONE) {
-            handleGsmInitLine(line);
-        }
-
-        // Обработка звонка
-        if (line.indexOf("RING") != -1) {
-            ringCount++;
-            if (ringCount >= 2) {
-                gsmSerial.println("ATH");
-                muteUntilAll = millis() + 3600000UL;
-                ringCount = 0;
-            }
-        } else if (line.indexOf("NO CARRIER") != -1) {
-            ringCount = 0;
-        }
-
-        // Автомат SMS
-        switch (gsm_state) {
-            case IDLE:
-                if (line.startsWith("+CMGR:")) gsm_state = SMS_READING;
-                break;
-            case SMS_READING:
-                if (line.equals("OK")) {
-                    processSMS(collectedText);
-                    collectedText = "";
-                    gsm_state = IDLE;
-                } else {
-                    collectedText += line + "\n";
-                }
-                break;
-        }
-    }
-    return false;
-}
-*/
 
 bool gsm_handle() {
   yield(); 
@@ -249,24 +129,6 @@ bool gsm_handle() {
     }
     return false;
 }
-
-  // // 2. Отправка команд инициализации (не зависит от входящих строк)
-  // if (initStep == INIT_CHECK_AT) {
-  //     Serial.println("[GSM] Отправляем AT...");
-  //     gsmSerial.println("AT");
-  //     stepStartTime = millis();
-  //     initStep = INIT_WAIT_AT;
-  // }
-
-  // // 3. Таймаут
-  // if (initStep != INIT_DONE && initStep != INIT_IDLE) {
-  //     if (millis() - stepStartTime > 5000) {
-  //         Serial.printf("[GSM] Таймаут на шаге %d, повтор...\n", initStep);
-  //         initStep = INIT_CHECK_AT;
-  //         stepStartTime = millis();
-  //         buffer = "";
-  //     }
-  // }
 
   // ← Максимум 5 строк за одну итерацию loop()
     int linesProcessed = 0;
@@ -297,22 +159,48 @@ bool gsm_handle() {
 
         switch (gsm_state) {
             case IDLE:
-                if (line.startsWith("+CMGR:")) gsm_state = SMS_READING;
-                break;
-            case SMS_READING:
-                if (line.equals("OK")) {
-                    processSMS(collectedText);
-                    collectedText = "";
-                    gsm_state = IDLE;
-                } else {
-                    collectedText += line + "\n";
+                if (line.startsWith("+CMT:")) {  
+                    // Парсим: +CMT: "+79181656914",,"24/01/01,12:00:00+12"
+                    int start = line.indexOf('"') + 1;
+                    int end = line.indexOf('"', start);
+                    if (start > 0 && end > start) {
+                        lastSmsFrom = line.substring(start, end);
+                    }
+                    gsm_state = SMS_READING;
                 }
+                break;
+            // case SMS_READING:
+            //     if (line.equals("OK")) {
+            //         processSMS(collectedText);
+            //         collectedText = "";
+            //         gsm_state = IDLE;
+            //     } else {
+            //         collectedText += line + "\n";
+            //     }
+            //     break;
+
+            case SMS_READING:
+                processSMS(line);
+                gsm_state = IDLE;
                 break;
         }
 
         yield(); // ← дать ESP обработать фоновые задачи между строками
     }
   return false;
+}
+
+void gsm_sendSms(String number, String text) {
+    Serial.printf("[GSM_SMS] Отправка на %s: %s\n", number.c_str(), text.c_str());
+    gsm_clearBuffer();
+    gsmSerial.print("AT+CMGS=\"");
+    gsmSerial.print(number);
+    gsmSerial.println("\"");
+    delay(500);
+    ESP.wdtFeed();
+    gsmSerial.print(text);
+    gsmSerial.write(26); // Ctrl+Z
+    ESP.wdtFeed();
 }
 
 void gsm_call(String number) {

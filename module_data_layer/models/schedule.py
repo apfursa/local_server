@@ -2,6 +2,7 @@
 Модель динамических временных периодов (уставок) для датчиков.
 """
 
+from datetime import datetime
 from module_data_layer.core.db_config import db
 
 
@@ -19,6 +20,8 @@ class DeviceSchedule(db.Model):
     relay_min = db.Column(db.Float, nullable=True)
     relay_max = db.Column(db.Float, nullable=True)
     alarm_max = db.Column(db.Float, nullable=True)
+
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=True)
 
     def __repr__(self):
         return f"<DeviceSchedule ID={self.id}, Sensor={self.sensor_id} ({self.data_type})>"

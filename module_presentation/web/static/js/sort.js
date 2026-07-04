@@ -61,7 +61,8 @@ $(document).ready(function() {
 
             const rowData = $.extend({}, sensor, {
                 btn_up: btnUp,
-                btn_down: btnDown
+                btn_down: btnDown,
+                is_relay: sensor.is_relay ? 'true' : 'false'
             });
 
             const $row = $(compileTemplate('#template-sort-row', rowData));
@@ -104,7 +105,8 @@ $(document).ready(function() {
         $('.table-sort-body-target .sort-item-row').each(function() {
             sortedArray.push({
                 sensor_id: parseInt($(this).data('sensor-id')),
-                type: $(this).data('type')
+                type: $(this).data('type'),
+                is_relay: $(this).data('is-relay') === true || $(this).data('is-relay') === 'true'
             });
         });
 

@@ -6,6 +6,7 @@
 from flask import Blueprint, jsonify, request, render_template
 from module_data_layer.core.db_config import db
 from module_data_layer.models.setting import Setting
+from module_data_layer.models.relay import Relay
 
 # Инициализируем Blueprint для модуля сортировки
 sort_bp = Blueprint('sort', __name__)
@@ -17,32 +18,91 @@ def sort_page():
     return render_template('sort.html')
 
 
+# @sort_bp.route('/save', methods=['POST'])
+# def save_sort_order():
+#     """Принимает упорядоченный список датчиков и сохраняет их индексы в поле sort_order."""
+#     try:
+#         req_data = request.get_json()
+#         if not isinstance(req_data, list):
+#             return jsonify({"status": "error", "message": "Ожидался массив данных"}), 400
+#
+#         # В цикле обновляем порядок на основе индекса элемента в пришедшем массиве
+#         for index, item in enumerate(req_data):
+#             sensor_id = item.get('sensor_id')
+#             d_type = item.get('type')
+#             is_relay = item.get('is_relay', False)
+#
+#             if is_relay:
+#                 # Реле — ищем в таблице relay
+#                 relay_pin = d_type.replace('relay_', '')
+#                 relay = db.session.query(Relay).filter_by(
+#                     modul_id=sensor_id, relay_pin=relay_pin
+#                 ).first()
+#                 if relay:
+#                     relay.sort_order = index + 1
+#             else:
+#                 # Датчик — как раньше
+#                 setting = db.session.query(Setting).filter_by(
+#                     sensor_id=sensor_id, data_type=d_type
+#                 ).first()
+#                 if not setting:
+#                     setting = Setting(sensor_id=sensor_id, data_type=d_type)
+#                     db.session.add(setting)
+#                 setting.sort_order = index + 1
+#
+#             if sensor_id is None or not d_type:
+#                 continue
+#
+#             # Ищем существующую запись настроек для этой пары датчик + тип
+#             setting = db.session.query(Setting).filter_by(sensor_id=sensor_id, data_type=d_type).first()
+#
+#             # Если записи в базе еще нет (датчик работал по дефолтам), создаем строку
+#             if not setting:
+#                 setting = Setting(sensor_id=sensor_id, data_type=d_type)
+#                 db.session.add(setting)
+#
+#             # Присваиваем новый порядковый индекс (0, 1, 2...)
+#             setting.sort_order = index+1
+#
+#         db.session.commit()
+#         return jsonify({"status": "success", "message": "Порядок датчиков успешно сохранен"}), 200
+#
+#     except Exception as err:
+#         db.session.rollback()
+#         return jsonify({"status": "error", "message": f"Внутренняя ошибка сервера: {str(err)}"}), 500
+
 @sort_bp.route('/save', methods=['POST'])
 def save_sort_order():
-    """Принимает упорядоченный список датчиков и сохраняет их индексы в поле sort_order."""
     try:
         req_data = request.get_json()
         if not isinstance(req_data, list):
             return jsonify({"status": "error", "message": "Ожидался массив данных"}), 400
 
-        # В цикле обновляем порядок на основе индекса элемента в пришедшем массиве
         for index, item in enumerate(req_data):
             sensor_id = item.get('sensor_id')
-            d_type = item.get('type')
+            d_type    = item.get('type')
+            is_relay  = item.get('is_relay', False)
 
             if sensor_id is None or not d_type:
                 continue
 
-            # Ищем существующую запись настроек для этой пары датчик + тип
-            setting = db.session.query(Setting).filter_by(sensor_id=sensor_id, data_type=d_type).first()
-
-            # Если записи в базе еще нет (датчик работал по дефолтам), создаем строку
-            if not setting:
-                setting = Setting(sensor_id=sensor_id, data_type=d_type)
-                db.session.add(setting)
-
-            # Присваиваем новый порядковый индекс (0, 1, 2...)
-            setting.sort_order = index
+            if is_relay:
+                # Реле — ищем в таблице relay
+                relay_pin = d_type.replace('relay_', '')
+                relay = db.session.query(Relay).filter_by(
+                    modul_id=sensor_id, relay_pin=relay_pin
+                ).first()
+                if relay:
+                    relay.sort_order = index + 1
+            else:
+                # Датчик — ищем в таблице settings
+                setting = db.session.query(Setting).filter_by(
+                    sensor_id=sensor_id, data_type=d_type
+                ).first()
+                if not setting:
+                    setting = Setting(sensor_id=sensor_id, data_type=d_type)
+                    db.session.add(setting)
+                setting.sort_order = index + 1
 
         db.session.commit()
         return jsonify({"status": "success", "message": "Порядок датчиков успешно сохранен"}), 200

@@ -9,5 +9,9 @@ from module_data_layer.models.setting import Setting
 from module_data_layer.models.schedule import DeviceSchedule
 from module_data_layer.models.category import Category
 from .system_setting import SystemSetting
+from .firmware import Firmware
+from .relay import Relay
+from .relay_condition import RelayCondition
 
-__all__ = ["Device", "Measurement", "Setting", "DeviceSchedule" , "Category", "SystemSetting"]
+
+__all__ = ["Device", "Measurement", "Setting", "DeviceSchedule" , "Category", "SystemSetting", "Firmware", "Relay", "RelayCondition"]

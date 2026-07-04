@@ -2,6 +2,7 @@
 let uiConfig = { current_view: 'table', group_by: 'none' };
 let localCachedData = []; // локальные кэшированные данные
 let showOnlyAlerts = false; // показывать только оповещения
+let deviceFilter = 'all'; // 'all', 'sensors', 'relay'
 
 // Самописный мини-компилятор строк на чистом JS
 function compileTemplate(templateId, dataObj) {
@@ -33,6 +34,13 @@ function buildUI() {
         ? localCachedData.filter(s => s.status_class === 'status-high' || s.status_class === 'status-low' || s.status_class === 'status-black')
         : localCachedData;
 
+    // Фильтр по типу устройства
+    if (deviceFilter === 'sensors') {
+        sensorsToDisplay = sensorsToDisplay.filter(s => !s.is_relay);
+    } else if (deviceFilter === 'relay') {
+        sensorsToDisplay = sensorsToDisplay.filter(s => s.is_relay);
+    }
+    
     // Группировка
     let groups = {};
     if (uiConfig.group_by !== 'none') {
@@ -64,12 +72,16 @@ function buildUI() {
             const $tableLayout = $(compileTemplate('#template-table-layout', {}));
             const $tbody = $tableLayout.find('.table-body-target');
             sensors.forEach(sensor => {
+                let settingsUrl = sensor.is_relay
+                    ? `/relay_settings/${sensor.sensor_id}/${sensor.type.replace('relay_', '')}`
+                    : `/settings/${sensor.sensor_id}?type=${sensor.type}`;
                 let dMin = sensor.relay_min !== '-' ? sensor.relay_min : sensor.alarm_min;
                 let dMax = sensor.relay_max !== '-' ? sensor.relay_max : sensor.alarm_max;
 
                 let enrichedSensor = $.extend({}, sensor, {
                     display_min: dMin,
-                    display_max: dMax
+                    display_max: dMax,
+                    settings_url: settingsUrl
                 });
 
                 $tbody.append(compileTemplate('#template-table-row', enrichedSensor));
@@ -78,12 +90,16 @@ function buildUI() {
         } else {
             const $cardLayout = $('<div class="cards-grid-wrapper"></div>');
             sensors.forEach(sensor => {
+                let settingsUrl = sensor.is_relay
+                    ? `/relay_settings/${sensor.sensor_id}/${sensor.type.replace('relay_', '')}`
+                    : `/settings/${sensor.sensor_id}?type=${sensor.type}`;
                 let dMin = sensor.relay_min !== '-' ? sensor.relay_min : sensor.alarm_min;
                 let dMax = sensor.relay_max !== '-' ? sensor.relay_max : sensor.alarm_max;
 
                 let enrichedSensor = $.extend({}, sensor, {
                     display_min: dMin,
-                    display_max: dMax
+                    display_max: dMax,
+                    settings_url: settingsUrl
                 });
 
                 $cardLayout.append(compileTemplate('#template-card', enrichedSensor));
@@ -98,33 +114,59 @@ function refreshData() {
     $.getJSON('/api/latest', function(data) {
         localCachedData = data;
         
-        // Считаем только реальные проблемы: аварии (high/low) и обрыв связи (black)
-        let alertCount = data.filter(s => 
-            s.status_class === 'status-high' || 
-            s.status_class === 'status-low' || 
-            s.status_class === 'status-black'
-        ).length;
+        // // Считаем только реальные проблемы: аварии (high/low) и обрыв связи (black)
+        // let filteredForAlerts = data;
+        // if (deviceFilter === 'sensors') filteredForAlerts = data.filter(s => !s.is_relay);
+        // else if (deviceFilter === 'relay') filteredForAlerts = data.filter(s => s.is_relay);
 
-        // Ищем или создаем внутри кнопки круглый красный бэйдж
-        const $btn = $('#btn-filter-alerts');
-        let $badge = $btn.find('.alert-badge-counter');
+        // let alertCount = filteredForAlerts.filter(s =>
+        //     s.status_class === 'status-high' ||
+        //     s.status_class === 'status-low' ||
+        //     s.status_class === 'status-black'
+        // ).length;
 
-        if ($badge.length === 0) {
-            $btn.append('<span class="alert-badge-counter"></span>');
-            $badge = $btn.find('.alert-badge-counter');
-        }
+        // // Ищем или создаем внутри кнопки круглый красный бэйдж
+        // const $btn = $('#btn-filter-alerts');
+        // let $badge = $btn.find('.alert-badge-counter');
 
-        // Если есть аварийные датчики — выводим число, если нет — убираем
-        if (alertCount > 0) {
-            $badge.text(alertCount);
-        } else {
-            $badge.text('');
-        }
+        // if ($badge.length === 0) {
+        //     $btn.append('<span class="alert-badge-counter"></span>');
+        //     $badge = $btn.find('.alert-badge-counter');
+        // }
+
+        // // Если есть аварийные датчики — выводим число, если нет — убираем
+        // if (alertCount > 0) {
+        //     $badge.text(alertCount);
+        // } else {
+        //     $badge.text('');
+        // }
+
+        updateAlertBadge();
 
         buildUI();
     }).fail(function(jqXHR, textStatus, errorThrown) {
         console.error("Ошибка при получении /api/latest:", textStatus, errorThrown);
     });
+}
+
+function updateAlertBadge() {
+    let filteredForAlerts = localCachedData;
+    if (deviceFilter === 'sensors') filteredForAlerts = localCachedData.filter(s => !s.is_relay);
+    else if (deviceFilter === 'relay') filteredForAlerts = localCachedData.filter(s => s.is_relay);
+
+    let alertCount = filteredForAlerts.filter(s =>
+        s.status_class === 'status-high' ||
+        s.status_class === 'status-low' ||
+        s.status_class === 'status-black'
+    ).length;
+
+    const $btn = $('#btn-filter-alerts');
+    let $badge = $btn.find('.alert-badge-counter');
+    if ($badge.length === 0) {
+        $btn.append('<span class="alert-badge-counter"></span>');
+        $badge = $btn.find('.alert-badge-counter');
+    }
+    $badge.text(alertCount > 0 ? alertCount : '');
 }
 
 // При старте страницы
@@ -212,6 +254,20 @@ $(document).ready(function() {
             });
         }
         buildUI();
+        updateAlertBadge();
+    });
+
+    // Цикличный фильтр устройств
+    $('#btn-device-filter').on('click', function() {
+        const cycle = ['all', 'sensors', 'relay'];
+        const icons = { 'all': '🔀', 'sensors': '📊', 'relay': '⚡' };
+        const current = cycle.indexOf(deviceFilter);
+        deviceFilter = cycle[(current + 1) % cycle.length];
+        $(this).text(icons[deviceFilter]);
+        // Подсвечиваем если не "все"
+        $(this).toggleClass('active', deviceFilter !== 'all');
+        buildUI();
+        updateAlertBadge();
     });
 
     setInterval(refreshData, 30000);

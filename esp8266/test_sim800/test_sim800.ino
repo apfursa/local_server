@@ -25,7 +25,7 @@ const int MAX_SERVER_ERRORS = 3;                       // Максимум ош�
 // --- Контроль наличия 220В ---
 const int powerPin = D5;                               // Пин датчика сети 220В (HIGH - свет есть, LOW - пропал)
 unsigned long powerLossStartTime = 0;                  // Время, когда пропало 220В (0 - свет есть)
-const unsigned long MAX_POWER_LOSS_TIME = 120000;      // 2 минуты до тревоги и между звонками
+const unsigned long MAX_POWER_LOSS_TIME = 300000;      // 5 минут до тревоги и между звонками
 unsigned long lastPowerLogTime = 0;                    // Таймер для секундного отсчета в порт
 bool powerAlarmTriggered = false;                      // Флаг: был ли уже звонок по аварии питания
 // int ringCounter = 0;                                   // Счетчик входящих гудков (RING) от админа
@@ -46,7 +46,12 @@ enum State {
   LOGIC, 
   READ_SMS, 
   DO_SOMETHING_NEW, 
-  STATE_IDLE
+  STATE_IDLE,
+  PROCESS_INCOMING_SMS,
+  // SMS_CHECK_AUTH,      
+  // SMS_SEND_REQUEST,    
+  // SMS_WAIT_RESPONSE,   
+  // SMS_SEND_REPLY       
   };  // Состояния системы
 State globalState = GET_IP_SERVER;
 int alarm = 0;
@@ -58,7 +63,79 @@ CallState callState = CALL_IDLE;
 // unsigned long ringLastTime = 0;
 // unsigned long muteUntilAll = 0; // Время окончания режима тишины
 
-// Объявляем структуру здесь, чтобы она была видна всему проекту
+enum SmsState {
+    SMS_IDLE,
+    SMS_CHECK_AUTH,
+    SMS_SEND_REQUEST,
+    SMS_WAIT_RESPONSE,
+    SMS_SEND_REPLY,
+    SMS_DONE
+};
+SmsState smsState = SMS_IDLE;
+String smsReplyText = "";
+
+void handleSmsFlow() {
+    switch (smsState) {
+        case SMS_CHECK_AUTH:
+            Serial.printf("[SMS] Проверка номера: %s vs %s\n", lastSmsFrom.c_str(), currentAdminPhone.c_str());
+            if (lastSmsFrom == currentAdminPhone) {
+                Serial.println("[SMS] Номер подтверждён");
+                smsState = SMS_SEND_REQUEST;
+            } else {
+                Serial.println("[SMS] Чужой номер, игнорируем");
+                smsState = SMS_DONE;
+            }
+            break;
+
+        case SMS_SEND_REQUEST:
+            if (httpState != HTTP_IDLE) {
+                break; // ждём пока основной HTTP запрос освободится
+            }
+            {
+                String body = "{\"text\":\"" + lastSmsContent + "\"}";
+                Serial.printf("[SMS] Отправка на бэкенд: %s\n", body.c_str());
+                startPostRequest("/api/alarm/sms_command", body);
+                smsState = SMS_WAIT_RESPONSE;
+            }
+            break;
+
+        case SMS_WAIT_RESPONSE:
+            if (httpState == HTTP_WAITING) {
+                handleHttp();
+            } else if (httpState == HTTP_DONE) {
+                Serial.printf("[SMS] Ответ от бэкенда: %s\n", httpResponse.c_str());
+                JsonDocument doc;
+                DeserializationError error = deserializeJson(doc, httpResponse);
+                if (!error) {
+                    smsReplyText = doc["reply"].as<String>();
+                } else {
+                    smsReplyText = "ERROR:PARSE";
+                }
+                httpResponse = "";
+                httpState = HTTP_IDLE;
+                smsState = SMS_SEND_REPLY;
+            } else if (httpState == HTTP_ERROR) {
+                Serial.println("[SMS] Ошибка запроса к бэкенду");
+                smsReplyText = "ERROR:SERVER";
+                httpState = HTTP_IDLE;
+                smsState = SMS_SEND_REPLY;
+            }
+            break;
+
+        case SMS_SEND_REPLY:
+            Serial.printf("[SMS] Отправляем ответ: %s\n", smsReplyText.c_str());
+            gsm_sendSms(currentAdminPhone, smsReplyText);
+            smsState = SMS_DONE;
+            break;
+
+        case SMS_DONE:
+            smsState = SMS_IDLE;
+            break;
+
+        case SMS_IDLE:
+            break;
+    }
+}
 
 void setup() {
   delay(1000);
@@ -73,6 +150,16 @@ void setup() {
 
 void loop() {
   gsm_handle();  // 1. Асинхронная обработка GSM (всегда первая!)
+
+  if (newSmsReceived && smsState == SMS_IDLE) {
+        smsState = SMS_CHECK_AUTH;
+        newSmsReceived = false;
+    }
+
+    if (smsState != SMS_IDLE) {
+        handleSmsFlow();
+        return;
+    }
 
   // 2. Остальная логика системы
   switch(globalState) {
@@ -155,9 +242,9 @@ void loop() {
       break;
 
     case READ_SMS:
-      // Ждём 2 минуты, потом снова проверяем сервер
-      if (millis() - callStartTime > 120000UL) {
-          Serial.println("[LOOP] 2 минуты прошло, проверяем сервер...");
+      // Ждём 5 минут, потом снова проверяем сервер
+      if (millis() - callStartTime > MAX_POWER_LOSS_TIME) {
+          Serial.println("[LOOP] 5 минут прошло, проверяем сервер...");
           isCalling = false;  // ← звонок завершён
           globalState = GET_DATA_FROM_SERVER;
       }

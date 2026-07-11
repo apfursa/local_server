@@ -17,6 +17,7 @@ from module_data_layer.models.relay_condition import RelayCondition
 
 # Инициализируем Blueprint модуля API.
 # Префикс /api задается глобально в run.py, здесь пути пишем СРАЗУ от корня.
+#jhkvfkhasgfhsadhvuc
 api_bp = Blueprint('api', __name__)
 
 # Справочник единиц измерения по типам данных согласно общему ТЗ

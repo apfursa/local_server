@@ -2,38 +2,37 @@
 #define CONFIG_H
 
 // --- Версия прошивки ---
-const int FIRMWARE_VERSION = 2;
+extern const int FIRMWARE_VERSION;
 
-// --- Идентификатор устройства ---
-const int SENSOR_ID = 50;
+// --- Идентификатор устройства esp8266---
+extern const int SENSOR_ID;
+extern const int MODUL_ID;
 
 // --- Имя точки доступа (если Wi-Fi не найден) ---
 extern const char *nameAP;
 
 // --- Пин датчика DHT22 ---
-const int DHT_PIN = D4;
+extern const int DHT_PIN;
 
 // --- Пины реле ---
-const int RELAY1_PIN = D1;
-const int RELAY2_PIN = D2;
+extern const int RELAY1_PIN;
+extern const int RELAY2_PIN;
 
 // --- Логика управления реле ---
-// true  = реле срабатывает от LOW (большинство модулей реле)
-// false = реле срабатывает от HIGH
-const bool RELAY_ACTIVE_LOW = true;
+extern const bool RELAY_ACTIVE_LOW;
 
 // --- MQTT / сервер ---
 extern String serverIP;
 extern bool isServerFound;
-const int MQTT_PORT = 1883;
+// extern const int MQTT_PORT;
 
 // --- Интервал отправки данных (миллисекунды) ---
-const unsigned long SEND_INTERVAL = 60000UL; // 60 секунд
+extern const unsigned long SEND_INTERVAL; // 60 секунд
 
 // --- Интервал получения уставок с сервера (миллисекунды) ---
-const unsigned long SETTINGS_INTERVAL = 60000UL; // 60 секунд
+extern const unsigned long SETTINGS_INTERVAL; // 60 секунд
 
 // --- Интервал проверки OTA (миллисекунды) ---
-const unsigned long OTA_CHECK_INTERVAL = 600000UL; // 10 минут
+extern const unsigned long OTA_CHECK_INTERVAL; // 10 минут
 
 #endif

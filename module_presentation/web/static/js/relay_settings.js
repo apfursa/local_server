@@ -9,7 +9,7 @@ $(document).ready(function () {
 
     let currentMode  = 'force';
     let currentState = 0;
-    let allSensors   = [];  // список датчиков для выпадающего списка
+    let allSensors   = [];
 
     // ==========================================
     // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -35,6 +35,21 @@ $(document).ready(function () {
         $(`#btn_${mode}`).addClass('active');
         currentMode = mode;
         updateStateButton(currentState, mode);
+        // Прячем/показываем блоки условий
+        if (mode === 'force') {
+            $('#conditions_section').hide();
+        } else {
+            $('#conditions_section').show();
+        }
+    }
+
+    function toggleAlert() {
+        const count = $('#base_conditions_container .condition-row').length;
+        if (count === 0) {
+            $('#no_alert').show();
+        } else {
+            $('#no_alert').hide();
+        }
     }
 
     function togglePeriodsAlert() {
@@ -79,17 +94,22 @@ $(document).ready(function () {
             </div>
         </div>`;
     }
-    
 
-    // Строим HTML блока периода
-    function buildPeriodBlock(timeStart, timeEnd, conditions) {
+    // scheduleResult: null = управляется условиями, 0 = выкл, 1 = вкл
+    function buildPeriodBlock(timeStart, timeEnd, scheduleResult, conditions) {
         const uid = Date.now() + Math.floor(Math.random() * 1000);
         let conditionsHtml = '';
         if (conditions && conditions.length > 0) {
             conditions.forEach(function (c) {
-                conditionsHtml += buildConditionRow(c.sensor_id, c.data_type, c.operator, c.value, c.result);
+                if (c.sensor_id) {
+                    conditionsHtml += buildConditionRow(c.sensor_id, c.data_type, c.operator, c.value, c.result);
+                }
             });
         }
+
+        const selNone = (scheduleResult === null || scheduleResult === undefined || scheduleResult === '') ? 'selected' : '';
+        const selOn   = scheduleResult == 1 ? 'selected' : '';
+        const selOff  = scheduleResult == 0 ? 'selected' : '';
 
         return `
         <div class="period-block" data-uid="${uid}">
@@ -101,6 +121,16 @@ $(document).ready(function () {
                 <button type="button" class="btn-del-period" data-uid="${uid}">×</button>
             </div>
             <div class="period-body">
+                <div style="margin-bottom:8px;">
+                    <label style="font-size:12px; color:#666; display:block; margin-bottom:3px;">
+                        Состояние реле в этот период:
+                    </label>
+                    <select class="period-schedule-result" style="width:100%; height:32px; font-size:12px; margin-bottom:0;">
+                        <option value="" ${selNone}>— управляется условиями —</option>
+                        <option value="1" ${selOn}>⚡ ВКЛЮЧИТЬ</option>
+                        <option value="0" ${selOff}>○ ВЫКЛЮЧИТЬ</option>
+                    </select>
+                </div>
                 <div class="condition-labels">
                     <span>Датчик</span><span>Условие</span><span>Значение</span><span></span>
                 </div>
@@ -118,13 +148,15 @@ $(document).ready(function () {
     // ==========================================
     function loadSensors(callback) {
         $.getJSON('/api/latest', function (data) {
-            allSensors = data.map(function (s) {
-                return {
-                    sensor_id: s.sensor_id,
-                    data_type: s.type,
-                    name: s.name || (s.sensor_id + '/' + s.type)
-                };
-            });
+            allSensors = data
+                .filter(function(s) { return !s.is_relay; })
+                .map(function (s) {
+                    return {
+                        sensor_id: s.sensor_id,
+                        data_type: s.type,
+                        name: s.name || (s.sensor_id + '/' + s.type)
+                    };
+                });
             if (callback) callback();
         }).fail(function () {
             if (callback) callback();
@@ -149,28 +181,42 @@ $(document).ready(function () {
 
             loadCategoriesIntoSelects(data.location, data.group);
 
-            // Базовые условия
+            // Базовые условия (без time_start)
             $('#base_conditions_container').empty();
-            const baseConditions = (data.conditions || []).filter(c => !c.time_start);
+            const baseConditions = (data.conditions || []).filter(c => !c.time_start && c.sensor_id);
             baseConditions.forEach(function (c) {
                 $('#base_conditions_container').append(
                     buildConditionRow(c.sensor_id, c.data_type, c.operator, c.value, c.result)
                 );
             });
 
-            // Периоды
+            // Периоды — группируем по time_start + time_end
             $('#periods_container').empty();
             const periods = {};
             (data.conditions || []).filter(c => c.time_start).forEach(function (c) {
                 const key = c.time_start + '-' + c.time_end;
-                if (!periods[key]) periods[key] = { time_start: c.time_start, time_end: c.time_end, conditions: [] };
-                periods[key].conditions.push(c);
+                if (!periods[key]) {
+                    periods[key] = {
+                        time_start: c.time_start,
+                        time_end: c.time_end,
+                        schedule_result: c.schedule_result,
+                        conditions: []
+                    };
+                }
+                if (c.schedule_result !== null && c.schedule_result !== undefined) {
+                    periods[key].schedule_result = c.schedule_result;
+                }
+                if (c.sensor_id) {
+                    periods[key].conditions.push(c);
+                }
             });
 
             Object.values(periods).forEach(function (p) {
-                $('#periods_container').append(buildPeriodBlock(p.time_start, p.time_end, p.conditions));
+                $('#periods_container').append(
+                    buildPeriodBlock(p.time_start, p.time_end, p.schedule_result, p.conditions)
+                );
             });
-
+            toggleAlert();
             togglePeriodsAlert();
         }).fail(function () {
             $('#device_title').text(`Настройки реле (ID ${modulId} / ${relayPin})`);
@@ -199,48 +245,48 @@ $(document).ready(function () {
     // ОБРАБОТЧИКИ СОБЫТИЙ
     // ==========================================
 
-    // Переключение режима
     $('#btn_force, #btn_conditions').on('click', function () {
         updateModeButtons($(this).data('mode'));
     });
 
-    // Кнопка состояния (только в режиме Принудительно)
     $('#btn_state').on('click', function () {
         if (currentMode !== 'force') return;
         currentState = currentState ? 0 : 1;
         updateStateButton(currentState, currentMode);
     });
 
-    // Добавить базовое условие
     $('#add_base_condition_btn').on('click', function () {
         $('#base_conditions_container').append(buildConditionRow('', '', '>', '', 1));
     });
 
-    // Удалить базовое условие
     $('#base_conditions_container').on('click', '.btn-del-condition', function () {
         $(this).closest('.condition-row').remove();
     });
 
-    // Добавить период
+    $('#add_base_condition_btn').on('click', function () {
+        toggleAlert();
+    });
+
+    $('#base_conditions_container').on('click', '.btn-del-condition', function () {
+        toggleAlert();
+    });
+
     $('#add_period_btn').on('click', function () {
-        $('#periods_container').append(buildPeriodBlock('08:00', '20:00', []));
+        $('#periods_container').append(buildPeriodBlock('08:00', '20:00', null, []));
         togglePeriodsAlert();
     });
 
-    // Удалить период
     $('#periods_container').on('click', '.btn-del-period', function () {
         $(this).closest('.period-block').remove();
         togglePeriodsAlert();
     });
 
-    // Добавить условие внутри периода
     $('#periods_container').on('click', '.add-period-condition-btn', function () {
         $(this).prev('.period-conditions-container').append(
             buildConditionRow('', '', '>', '', 1)
         );
     });
 
-    // Удалить условие внутри периода
     $('#periods_container').on('click', '.btn-del-condition', function () {
         $(this).closest('.condition-row').remove();
     });
@@ -250,44 +296,64 @@ $(document).ready(function () {
     // ==========================================
     $('#save_btn').on('click', function () {
 
-        // Собираем базовые условия
+        // Базовые условия
         const baseConditions = [];
         $('#base_conditions_container .condition-row').each(function () {
             const sensorVal = $(this).find('.cond-sensor').val();
             if (!sensorVal) return;
-            const parts = sensorVal.split('|');
+            const p = sensorVal.split('|');
             baseConditions.push({
-                sensor_id: parseInt(parts[0]),
-                data_type: parts[1],
+                sensor_id: parseInt(p[0]),
+                data_type: p[1],
                 operator: $(this).find('.cond-operator').val(),
                 value: parseFloat($(this).find('.cond-value').val()) || 0,
                 result: parseInt($(this).find('.cond-result').val()),
                 time_start: null,
-                time_end: null
+                time_end: null,
+                schedule_result: null
             });
         });
 
-        // Собираем условия из периодов
+        // Условия из периодов
         const periodConditions = [];
         $('#periods_container .period-block').each(function () {
             const timeStart = $(this).find('.period-start').val();
             const timeEnd   = $(this).find('.period-end').val();
             if (!timeStart || !timeEnd) return;
 
-            $(this).find('.condition-row').each(function () {
+            const srVal = $(this).find('.period-schedule-result').val();
+            const scheduleResultVal = srVal !== '' ? parseInt(srVal) : null;
+
+            const $condRows = $(this).find('.condition-row');
+            $condRows.each(function () {
                 const sensorVal = $(this).find('.cond-sensor').val();
                 if (!sensorVal) return;
-                const parts = sensorVal.split('|');
+                const p = sensorVal.split('|');
                 periodConditions.push({
-                    sensor_id: parseInt(parts[0]),
-                    data_type: parts[1],
+                    sensor_id: parseInt(p[0]),
+                    data_type: p[1],
                     operator: $(this).find('.cond-operator').val(),
                     value: parseFloat($(this).find('.cond-value').val()) || 0,
                     result: parseInt($(this).find('.cond-result').val()),
                     time_start: timeStart,
-                    time_end: timeEnd
+                    time_end: timeEnd,
+                    schedule_result: scheduleResultVal
                 });
             });
+
+            // Если нет условий по датчикам но есть schedule_result — сохраняем маркер
+            if ($condRows.length === 0 && scheduleResultVal !== null) {
+                periodConditions.push({
+                    sensor_id: null,
+                    data_type: null,
+                    operator: null,
+                    value: null,
+                    result: null,
+                    time_start: timeStart,
+                    time_end: timeEnd,
+                    schedule_result: scheduleResultVal
+                });
+            }
         });
 
         const payload = {

@@ -43,7 +43,8 @@ def evaluate_conditions(relay: Relay) -> int:
     active_conditions = period_conditions if period_conditions else base_conditions
 
     if not active_conditions:
-        return relay.state
+        # return relay.state
+        return 0
 
     # Проверяем есть ли принудительное состояние периода (schedule_result)
     # Берём из первого условия периода
@@ -169,7 +170,8 @@ def get_relay_settings(modul_id, relay_pin):
         "value": c.value,
         "result": c.result,
         "time_start": c.time_start or "",
-        "time_end": c.time_end or ""
+        "time_end": c.time_end or "",
+        "schedule_result": c.schedule_result
     } for c in conditions]
 
     return jsonify({
@@ -192,6 +194,7 @@ def get_relay_settings(modul_id, relay_pin):
 def save_relay_settings(modul_id, relay_pin):
     try:
         data = request.get_json() or {}
+
 
         relay = db.session.query(Relay).filter_by(
             modul_id=modul_id, relay_pin=relay_pin
@@ -226,22 +229,29 @@ def save_relay_settings(modul_id, relay_pin):
             db.session.query(RelayCondition).filter_by(
                 modul_id=modul_id, relay_pin=relay_pin
             ).delete()
+            print('data!!: ')
+            print(data)
 
             for c in data['conditions']:
                 condition = RelayCondition(
                     modul_id=modul_id,
                     relay_pin=relay_pin,
-                    sensor_id=int(c['sensor_id']),
-                    data_type=str(c['data_type']),
-                    operator=str(c['operator']),
-                    value=float(c['value']),
-                    result=int(c['result']),
+                    sensor_id=int(c['sensor_id']) if c.get('sensor_id') is not None else None,
+                    data_type=str(c['data_type']) if c.get('data_type') is not None else None,
+                    operator=str(c['operator']) if c.get('operator') is not None else None,
+                    value=float(c['value']) if c.get('value') is not None else None,
+                    result=int(c['result']) if c.get('result') is not None else None,
                     time_start=c.get('time_start') or None,
-                    time_end=c.get('time_end') or None
+                    time_end=c.get('time_end') or None,
+                    schedule_result=int(c['schedule_result']) if c.get('schedule_result') is not None else None
                 )
                 db.session.add(condition)
 
         db.session.commit()
+        if relay.mode == 'conditions':
+            new_state = evaluate_conditions(relay)
+            relay.state = new_state
+            db.session.commit()
         return jsonify({"status": "success"}), 200
 
     except Exception as e:

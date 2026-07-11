@@ -1,8 +1,10 @@
 #include "config.h"
 #include "wifi_manager.h"
 #include "ds18b20.h"
-#include "mqtt_client.h"
+// #include "mqtt_client.h"
+#include "http_client.h"
 #include "ota.h"
+#include "udp.h"
 
 // Состояния главного автомата
 enum State {
@@ -18,6 +20,7 @@ State globalState = STATE_FIND_SERVER;
 unsigned long idleStartTime = 0;
 unsigned long otaLastCheckTime = 0;
 float lastTemperature = -127.0;
+unsigned int localPort = 8888; 
 
 void setup() {
     Serial.begin(115200);
@@ -25,14 +28,21 @@ void setup() {
     Serial.printf(">>> Версия прошивки: %d\n", FIRMWARE_VERSION);
 
     setupWiFi();
-    mqtt_begin();
+    
+    if (udp.begin(localPort)) {
+        Serial.printf("[UDP] Слушатель запущен на порту %d\n", localPort);
+    } else {
+        Serial.println("[UDP] Ошибка запуска слушателя!");
+    }
+    http_begin();
     ds18b20_begin();
 
     Serial.println(">>> Система инициализирована");
 }
 
 void loop() {
-    mqtt_handle();
+    // mqtt_handle();
+    http_handle();
 
     switch (globalState) {
         case STATE_FIND_SERVER:
@@ -65,7 +75,8 @@ void loop() {
 
         case STATE_SEND:
             if (lastTemperature != -127.0) {
-                mqtt_sendTemperature(lastTemperature);
+                // mqtt_sendTemperature(lastTemperature);
+                http_sendTemperature(lastTemperature);
             } else {
                 Serial.println("[LOOP] Датчик недоступен, пропускаем отправку");
             }

@@ -12,6 +12,7 @@ from module_data_layer.models.measurement import Measurement
 from module_data_layer.models.setting import Setting
 from module_data_layer.models.schedule import DeviceSchedule
 from module_business_logic.processors.sensor_processor import process_sensor_data
+from module_data_layer.models.relay_condition import RelayCondition
 
 
 # Инициализируем Blueprint модуля API.
@@ -181,6 +182,16 @@ def get_latest_state():
             loc = r.location.name if r.location else ""
             grp = r.group.name if r.group else ""
             meta_label = f"{loc} / {grp}" if (loc and grp) else (loc or grp or "")
+            relay_schedule_time = ""
+            relay_conditions = db.session.query(RelayCondition).filter_by(
+                modul_id=r.modul_id,
+                relay_pin=r.relay_pin
+            ).filter(RelayCondition.time_start.isnot(None)).all()
+
+            for rc in relay_conditions:
+                if rc.time_start <= current_time_str <= rc.time_end:
+                    relay_schedule_time = f"({rc.time_start} - {rc.time_end})"
+                    break
 
             response_data.append({
                 "uid": f"relay_{r.modul_id}_{r.relay_pin}",
@@ -203,7 +214,7 @@ def get_latest_state():
                 "relay_max": '-',
                 "alarm_max": '-',
                 "meta_label": meta_label,
-                "schedule_time": '',
+                "schedule_time": relay_schedule_time,
                 "schedules": [],
                 "is_relay": True,  # ← флаг для фронтенда
                 "sort_order": r.sort_order if r.sort_order else 999

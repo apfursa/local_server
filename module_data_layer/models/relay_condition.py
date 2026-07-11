@@ -17,17 +17,17 @@ class RelayCondition(db.Model):
     relay_pin = db.Column(db.String(5), nullable=False, index=True)
 
     # Датчик — источник данных для условия
-    sensor_id = db.Column(db.Integer, nullable=False)
-    data_type = db.Column(db.String(20), nullable=False)
+    sensor_id = db.Column(db.Integer, nullable=True)
+    data_type = db.Column(db.String(20), nullable=True)
 
     # Условие сравнения: ">", "<", "=", ">=", "<=", "!="
-    operator  = db.Column(db.String(2), nullable=False, default='>')
+    operator  = db.Column(db.String(2), nullable=True)
 
     # Пороговое значение
-    value     = db.Column(db.Float, nullable=False, default=0.0)
+    value     = db.Column(db.Float, nullable=True)
 
     # Результат при выполнении условия: 0 = выкл, 1 = вкл
-    result    = db.Column(db.Integer, nullable=False, default=1)
+    result    = db.Column(db.Integer, nullable=True)
 
     # Временной диапазон (NULL = базовое условие, без периода)
     time_start = db.Column(db.String(5), nullable=True)  # "08:00"

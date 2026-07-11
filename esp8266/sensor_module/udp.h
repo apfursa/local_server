@@ -41,8 +41,8 @@ void get_server_IP() {
     Serial.println(response);
 
     if (response.startsWith("SERVER_IP:")) {
-      serverHost = response.substring(10);
-      serverHost.trim();
+      serverIP = response.substring(10);
+      serverIP.trim();
       isServerFound = true;
       Serial.println("[UDP] Сервер успешно найден!");
     }

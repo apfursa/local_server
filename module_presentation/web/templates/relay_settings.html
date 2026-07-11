@@ -169,18 +169,18 @@
 
     <hr>
 
-    <!-- Текущее состояние -->
-    <label>Текущее состояние:</label>
-    <div class="state-block">
-        <button id="btn_state" class="btn-state off">ВЫКЛЮЧЕНО</button>
-        <span id="state_hint" style="font-size:12px; color:#666;"></span>
-    </div>
-
     <!-- Переключатель режима -->
     <label>Режим управления:</label>
     <div class="mode-toggle">
         <button id="btn_force" class="active" data-mode="force">Принудительно</button>
         <button id="btn_conditions" data-mode="conditions">По условиям</button>
+    </div>
+
+    <!-- Текущее состояние -->
+    <label>Текущее состояние:</label>
+    <div class="state-block">
+        <button id="btn_state" class="btn-state off">ВЫКЛЮЧЕНО</button>
+        <span id="state_hint" style="font-size:12px; color:#666;"></span>
     </div>
 
     <hr>
@@ -203,6 +203,11 @@
                 style="width:100%; margin-top:4px; padding:6px; cursor:pointer;">
             ➕ Добавить условие по датчику
         </button>
+
+        <div id="no_alert"
+             style="color:#666; text-align:center; padding:15px; border:1px dashed #ccc; margin-bottom:15px;">
+            Если базовое условие не задано — реле будет ВЫКЛЮЧЕНО вне периодов расписания.
+        </div>
 
         <hr>
 

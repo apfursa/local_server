@@ -21,7 +21,7 @@ def mqtt_on_message(app, msg):
     Обеспечивает модульную структуру и прозрачную запись любых параметров.
     """
     try:
-        # Шаг 1: Парсинг топика (ожидается формат "sensors/<id>")
+        # Шаг 1: Парсинг топика (ожидается формат "sensors/<id>").
         topic_parts = msg.topic.split('/')
         if len(topic_parts) != 2 or topic_parts[0] != 'sensors':
             return  # Игнорируем топики, не подпадающие под наш стандарт
@@ -60,7 +60,7 @@ def mqtt_on_message(app, msg):
                     # Сюда попадем только если упала сама база данных или пришел не float (например, пустая строка)
                     logging.error(f"[MQTT] Ошибка записи параметра '{key}' от датчика {sensor_id}: {e}")
 
-    except Exception as err:
+    except Exception as err:  
         logging.error(f"[MQTT] Критическая ошибка при обработке пакета: {err}", exc_info=True)
 
 

@@ -29,6 +29,7 @@ def create_app():
     from module_business_logic.controllers.sort_controller import sort_bp
     from module_business_logic.controllers.ota_controller import ota_bp
     from module_business_logic.controllers.relay_controller import relay_bp
+    from module_ingestion.controllers.ingestion_controller import ingestion_bp
 
     # Регистрация блупринтов
     app.register_blueprint(views_bp)
@@ -41,6 +42,7 @@ def create_app():
     app.register_blueprint(sort_bp, url_prefix='/sort')
     app.register_blueprint(ota_bp, url_prefix='/api/ota')
     app.register_blueprint(relay_bp, url_prefix='/api/relay')
+    app.register_blueprint(ingestion_bp, url_prefix='/ingest')
 
     # Подгружаем модели для работы миграций
     with app.app_context():

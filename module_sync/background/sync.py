@@ -22,7 +22,7 @@ SYNC_API_KEY = "MySm@rt2026!Kz9x"  # Ключ для авторизации
 SYNC_INTERVAL = 30  # 30 секунд
 LOCAL_DB = os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')), 'sensors.db')
 
-STATE_FILE = "sync_state.json"
+STATE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'sync_state.json')
 
 
 def _get_local_time():
